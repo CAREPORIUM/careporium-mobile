@@ -17,7 +17,7 @@ const handleLogin = () => {
   setLoading(true);
   setTimeout(() => {
     setLoading(false);
-    router.replace("/credentials"); // temporary: becomes "/profile" once US-07 exists
+    router.replace("/credentials"); 
   }, 1000);
 };
   return (
