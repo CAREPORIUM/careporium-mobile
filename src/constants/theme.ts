@@ -17,6 +17,10 @@ export const colors = {
 
   white: "#FFFFFF",
   black: "#000000",
+
+  primaryLight: "#EAF0FD",
+  card: "#F9FAFB",
+  success: "#16A34A",
 } as const;
 
 export const spacing = {

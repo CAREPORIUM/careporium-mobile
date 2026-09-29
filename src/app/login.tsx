@@ -13,12 +13,13 @@ export default function LoginScreen() {
   const [hidePassword, setHidePassword] = useState(true);
   const [loading, setLoading] = useState(false);
 
-  const handleLogin = () => {
-    setLoading(true);
-    // Mock for now. Replace with the real API call when the backend contract arrives.
-    setTimeout(() => setLoading(false), 1000);
-  };
-
+const handleLogin = () => {
+  setLoading(true);
+  setTimeout(() => {
+    setLoading(false);
+    router.replace("/credentials"); // temporary: becomes "/profile" once US-07 exists
+  }, 1000);
+};
   return (
     <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: spacing.xxl }}>
       <Text style={styles.title}>Welcome Back</Text>
