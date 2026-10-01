@@ -17,7 +17,7 @@ const handleLogin = () => {
   setLoading(true);
   setTimeout(() => {
     setLoading(false);
-    router.replace("/credentials"); 
+    router.replace("/(tabs)");
   }, 1000);
 };
 
