@@ -1,292 +1,73 @@
-import React, { useState } from "react";
-import {
-  Alert,
-  Modal,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from "react-native";
-
+import { useState } from "react";
+import { Text, StyleSheet, Pressable, ScrollView } from "react-native";
+import { router } from "expo-router";
+import { Ionicons } from "@expo/vector-icons";
 import AppInput from "@/components/ui/AppInput";
 import PrimaryButton from "@/components/ui/PrimaryButton";
+import { colors, spacing, typography } from "@/constants/theme";
 
-export default function Signup() {
-  const [name, setName] = useState("");
+export default function SignupScreen() {
+  const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
-  const [role, setRole] = useState("");
+  const [phone, setPhone] = useState("");
+  const [location, setLocation] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [termsAccepted, setTermsAccepted] = useState(false);
+  const [hidePassword, setHidePassword] = useState(true);
+  const [hideConfirm, setHideConfirm] = useState(true);
 
-  const [dropdownVisible, setDropdownVisible] = useState(false);
-
-  const roles = [
-    "Doctor",
-    "Nurse",
-    "Pharmacist",
-    "Lab Technician",
-    "Other",
-  ];
-
-  const handleContinue = () => {
-    if (
-      !name ||
-      !email ||
-      !role ||
-      !password ||
-      !confirmPassword
-    ) {
-      Alert.alert("Incomplete form", "Please fill in all fields.");
-      return;
-    }
-
-    if (password !== confirmPassword) {
-      Alert.alert("Password Error", "Passwords do not match.");
-      return;
-    }
-
-    if (!termsAccepted) {
-      Alert.alert(
-        "Terms and Conditions",
-        "Please accept the terms and conditions."
-      );
-      return;
-    }
-
-    Alert.alert("Success", "Your information has been submitted.");
-  };
+  const isValid =
+    fullName && email && phone && location && password && confirmPassword && password === confirmPassword;
 
   return (
-    <ScrollView
-      contentContainerStyle={styles.container}
-      keyboardShouldPersistTaps="handled"
-    >
-      <Text style={styles.step}>Step 1 of 3</Text>
-
-      <Text style={styles.title}>Basic Identity</Text>
+    <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: spacing.xxl }}>
+      <Pressable style={styles.backButton} onPress={() => router.back()}>
+        <Ionicons name="arrow-back" size={20} color={colors.text} />
+      </Pressable>
+      <Text style={styles.title}>Professional Profile</Text>
+      <Text style={styles.subtitle}>Basic identity</Text>
+      <Text style={styles.step}>Step 1 of 2</Text>
 
       <Text style={styles.label}>Full Name</Text>
+      <AppInput placeholder="Luke Marcus" value={fullName} onChangeText={setFullName}
+        leftIcon={<Ionicons name="person-outline" size={20} color={colors.placeholder} />} />
 
-      <AppInput
-        placeholder="Full Name"
-        value={name}
-        onChangeText={setName}
-        autoCapitalize="words"
-      />
+      <Text style={[styles.label, { marginTop: spacing.lg }]}>Email Address</Text>
+      <AppInput placeholder="you@gmail.com" keyboardType="email-address" autoCapitalize="none"
+        value={email} onChangeText={setEmail}
+        leftIcon={<Ionicons name="mail-outline" size={20} color={colors.placeholder} />} />
 
-      <Text style={styles.label}>Email</Text>
+      <Text style={[styles.label, { marginTop: spacing.lg }]}>Phone Number</Text>
+      <AppInput placeholder="+234 9082566035" keyboardType="phone-pad" value={phone} onChangeText={setPhone}
+        leftIcon={<Ionicons name="call-outline" size={20} color={colors.placeholder} />} />
 
-      <AppInput
-        placeholder="Email"
-        value={email}
-        onChangeText={setEmail}
-        keyboardType="email-address"
-        autoCapitalize="none"
-      />
+      <Text style={[styles.label, { marginTop: spacing.lg }]}>Location</Text>
+      <AppInput placeholder="Ikeja, Lagos" value={location} onChangeText={setLocation} />
 
-      <Text style={styles.label}>Professional Role</Text>
+      <Text style={[styles.label, { marginTop: spacing.lg }]}>Password</Text>
+      <AppInput placeholder="••••••••••••" secureTextEntry={hidePassword} value={password} onChangeText={setPassword}
+        leftIcon={<Ionicons name="lock-closed-outline" size={20} color={colors.placeholder} />}
+        rightIcon={<Pressable onPress={() => setHidePassword(!hidePassword)}>
+          <Ionicons name={hidePassword ? "eye-off-outline" : "eye-outline"} size={20} color={colors.placeholder} />
+        </Pressable>} />
 
-      <Pressable
-        style={styles.dropdown}
-        onPress={() => setDropdownVisible(true)}
-      >
-        <Text
-          style={role ? styles.dropdownText : styles.placeholder}
-        >
-          {role || "Select professional role"}
-        </Text>
+      <Text style={[styles.label, { marginTop: spacing.lg }]}>Confirm Password</Text>
+      <AppInput placeholder="••••••••••••" secureTextEntry={hideConfirm} value={confirmPassword} onChangeText={setConfirmPassword}
+        leftIcon={<Ionicons name="lock-closed-outline" size={20} color={colors.placeholder} />}
+        rightIcon={<Pressable onPress={() => setHideConfirm(!hideConfirm)}>
+          <Ionicons name={hideConfirm ? "eye-off-outline" : "eye-outline"} size={20} color={colors.placeholder} />
+        </Pressable>} />
 
-        <Text style={styles.arrow}>▼</Text>
-      </Pressable>
-
-      <Modal
-        visible={dropdownVisible}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setDropdownVisible(false)}
-      >
-        <Pressable
-          style={styles.modalOverlay}
-          onPress={() => setDropdownVisible(false)}
-        >
-          <View style={styles.dropdownMenu}>
-            <Text style={styles.menuTitle}>
-              Select Professional Role
-            </Text>
-
-            {roles.map((item) => (
-              <Pressable
-                key={item}
-                style={styles.roleOption}
-                onPress={() => {
-                  setRole(item);
-                  setDropdownVisible(false);
-                }}
-              >
-                <Text style={styles.roleText}>{item}</Text>
-              </Pressable>
-            ))}
-          </View>
-        </Pressable>
-      </Modal>
-
-      <Text style={styles.label}>Password</Text>
-
-      <AppInput
-        placeholder="Password"
-        value={password}
-        onChangeText={setPassword}
-        secureTextEntry
-      />
-
-      <Text style={styles.label}>Confirm Password</Text>
-
-      <AppInput
-        placeholder="Confirm Password"
-        value={confirmPassword}
-        onChangeText={setConfirmPassword}
-        secureTextEntry
-      />
-
-      <Pressable
-        style={styles.checkboxRow}
-        onPress={() => setTermsAccepted(!termsAccepted)}
-      >
-        <View
-          style={[
-            styles.checkbox,
-            termsAccepted && styles.checkboxChecked,
-          ]}
-        >
-          {termsAccepted && (
-            <Text style={styles.checkmark}>✓</Text>
-          )}
-        </View>
-
-        <Text style={styles.termsText}>
-          I agree to the terms and conditions
-        </Text>
-      </Pressable>
-
-      <PrimaryButton
-        title="Continue"
-        onPress={handleContinue}
-      />
+      <PrimaryButton title="Continue" disabled={!isValid} onPress={() => router.push("/signup-step2")} style={{ marginTop: spacing.xl }} />
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flexGrow: 1,
-    padding: 24,
-    paddingBottom: 40,
-  },
-
-  step: {
-    fontSize: 14,
-    marginBottom: 8,
-  },
-
-  title: {
-    fontSize: 28,
-    fontWeight: "700",
-    marginBottom: 24,
-  },
-
-  label: {
-    fontSize: 15,
-    fontWeight: "600",
-    marginBottom: 8,
-    marginTop: 16,
-  },
-
-  dropdown: {
-    height: 56,
-    borderWidth: 1,
-    borderColor: "#D1D5DB",
-    borderRadius: 8,
-    paddingHorizontal: 16,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-  },
-
-  dropdownText: {
-    fontSize: 16,
-    color: "#111827",
-  },
-
-  placeholder: {
-    fontSize: 16,
-    color: "#9CA3AF",
-  },
-
-  arrow: {
-    fontSize: 12,
-  },
-
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.4)",
-    justifyContent: "center",
-    padding: 24,
-  },
-
-  dropdownMenu: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 12,
-    padding: 16,
-  },
-
-  menuTitle: {
-    fontSize: 18,
-    fontWeight: "700",
-    marginBottom: 12,
-  },
-
-  roleOption: {
-    paddingVertical: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: "#E5E7EB",
-  },
-
-  roleText: {
-    fontSize: 16,
-  },
-
-  checkboxRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginVertical: 24,
-  },
-
-  checkbox: {
-    width: 22,
-    height: 22,
-    borderWidth: 1,
-    borderColor: "#9CA3AF",
-    borderRadius: 4,
-    marginRight: 10,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-
-  checkboxChecked: {
-    backgroundColor: "#000000",
-    borderColor: "#000000",
-  },
-
-  checkmark: {
-    color: "#FFFFFF",
-    fontSize: 15,
-    fontWeight: "700",
-  },
-
-  termsText: {
-    flex: 1,
-    fontSize: 14,
-  },
+  container: { flex: 1, backgroundColor: colors.background, paddingHorizontal: spacing.lg, paddingTop: spacing.xxl },
+  backButton: { width: 44, height: 44, borderRadius: 999, backgroundColor: colors.white, alignItems: "center", justifyContent: "center", marginBottom: spacing.md, shadowColor: "#000", shadowOpacity: 0.1, shadowRadius: 4, elevation: 2 },
+  title: { ...typography.h1, color: colors.text },
+  subtitle: { ...typography.body, color: colors.textSecondary, marginTop: spacing.xs },
+  step: { ...typography.h3, color: colors.text, marginTop: spacing.lg, marginBottom: spacing.lg },
+  label: { ...typography.label, color: colors.text, marginBottom: spacing.sm },
 });
