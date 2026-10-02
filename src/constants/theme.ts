@@ -21,6 +21,9 @@ export const colors = {
   primaryLight: "#EAF0FD",
   card: "#F9FAFB",
   success: "#16A34A",
+
+  warning: "#B54708",
+  warningLight: "#FFFAEB",
 } as const;
 
 export const spacing = {
