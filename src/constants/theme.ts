@@ -24,6 +24,9 @@ export const colors = {
 
   warning: "#B54708",
   warningLight: "#FFFAEB",
+
+  successLight: "#ECFDF3",
+  errorLight: "#FEE2E2",
 } as const;
 
 export const spacing = {

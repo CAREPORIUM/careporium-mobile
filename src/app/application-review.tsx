@@ -1,18 +1,13 @@
-import React from "react";
-import {
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-  Pressable,
-} from "react-native";
+import { useState } from "react";
+import { ScrollView, StyleSheet, Text, View, Pressable } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { router } from "expo-router";
-
+import { router, useLocalSearchParams } from "expo-router";
 import AppInput from "@/components/ui/AppInput";
 import PrimaryButton from "@/components/ui/PrimaryButton";
-import { colors, spacing, typography, radius } from "@/constants/theme";
+import StepIndicator from "@/components/ui/StepIndicator";
+import { colors, radius, spacing, typography } from "@/constants/theme";
 
+// Mock — should use the shift id param once connected to real shift data
 const MOCK_SHIFT = {
   title: "Registered Nurse · Acute Care",
   facility: "Mainland Care Hospital · Verified facility",
@@ -21,243 +16,82 @@ const MOCK_SHIFT = {
   location: "Ikeja · 7.7 km away",
   rate: "₦3,000/hr · ₦36,000 estimated",
 };
-
-const MOCK_WORKER = {
-  name: "Amara Okafor · RN",
-  licence: "Verified and active",
-  availability: "Full 07:00–19:00 WAT shift",
-};
+const MOCK_WORKER = { name: "Amara Okafor · RN", licence: "Verified and active", availability: "Full 07:00–19:00 WAT shift" };
 
 export default function ApplicationReview() {
-  const [message, setMessage] = React.useState(
-    "I'm available for the full shift and have acute care experience."
-  );
+  const { id } = useLocalSearchParams<{ id?: string }>();
+  const [message, setMessage] = useState("I'm available for the full shift and have acute care experience.");
 
   return (
-    <View style={styles.container}>
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContent}
-      >
-        {/* Header */}
-        <View style={styles.header}>
-          <Text style={styles.logo}>
-            <Text style={styles.logoCircle}>◉</Text> CAREPORIUM
-          </Text>
+    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+      <Text style={styles.eyebrow}>APPLICATION</Text>
+      <Text style={styles.title}>Review before you apply</Text>
+      <Text style={styles.subtitle}>Confirm your availability and verified credentials before sharing with the facility.</Text>
 
-          <Ionicons name="menu" size={20} color="#667085" />
-        </View>
+      <StepIndicator current={1} />
 
-        {/* Heading */}
-        <Text style={styles.eyebrow}>APPLICATION</Text>
-
-        <Text style={styles.title}>Review before you apply</Text>
-
-        <Text style={styles.subtitle}>
-          Confirm your availability and verified credentials before sharing
-          with the facility.
-        </Text>
-
-        {/* Step indicator */}
-        <View style={styles.stepsContainer}>
-          <Step
-            number="1"
-            title="REVIEW"
-            active
-          />
-
-          <View style={styles.stepLine} />
-
-          <Step number="2" title="SUBMIT" />
-
-          <View style={styles.stepLine} />
-
-          <Step number="3" title="FACILITY DECISION" />
-        </View>
-
-        {/* Shift Summary */}
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>Shift summary</Text>
-
-          <Text style={styles.shiftTitle}>{MOCK_SHIFT.title}</Text>
-
-          <Text style={styles.facility}>{MOCK_SHIFT.facility}</Text>
-
-          <View style={styles.matchPill}>
-            <Text style={styles.matchText}>{MOCK_SHIFT.match}</Text>
-          </View>
-
-          <InfoRow
-            icon="calendar-outline"
-            text={MOCK_SHIFT.dateTime}
-          />
-
-          <InfoRow
-            icon="location-outline"
-            text={MOCK_SHIFT.location}
-          />
-
-          <Text style={styles.rate}>{MOCK_SHIFT.rate}</Text>
-
-          <Pressable
-            style={styles.outlineButton}
-            onPress={() => router.back()}
-          >
-            <Text style={styles.outlineButtonText}>View shift</Text>
-          </Pressable>
-        </View>
-
-        {/* Your details */}
-        <Text style={styles.sectionTitle}>Your details</Text>
-
-        <View style={styles.detailCard}>
-          <Text style={styles.detailLabel}>Professional</Text>
-          <Text style={styles.detailValue}>{MOCK_WORKER.name}</Text>
-
-          <View style={styles.divider} />
-
-          <Text style={styles.detailLabel}>Professional licence</Text>
-
-          <View style={styles.verifiedRow}>
-            <View style={styles.checkCircle}>
-              <Ionicons name="checkmark" size={12} color="#16A34A" />
-            </View>
-
-            <Text style={styles.verifiedText}>
-              {MOCK_WORKER.licence}
-            </Text>
-          </View>
-
-          <View style={styles.divider} />
-
-          <Text style={styles.detailLabel}>Availability</Text>
-          <Text style={styles.detailValue}>
-            {MOCK_WORKER.availability}
-          </Text>
-        </View>
-
-        {/* Message */}
-        <View style={styles.messageContainer}>
-          <AppInput
-            label="Message to the facility"
-            value={message}
-            onChangeText={setMessage}
-            multiline
-            numberOfLines={4}
-            placeholder="Write a message..."
-          />
-        </View>
-
-        {/* Buttons */}
-        <Pressable
-          style={styles.backButton}
-          onPress={() => router.back()}
-        >
-          <Text style={styles.backButtonText}>Back to shift</Text>
+      <View style={styles.card}>
+        <Text style={styles.cardTitle}>Shift summary</Text>
+        <Text style={styles.shiftTitle}>{MOCK_SHIFT.title}</Text>
+        <Text style={styles.facility}>{MOCK_SHIFT.facility}</Text>
+        <View style={styles.matchPill}><Text style={styles.matchText}>{MOCK_SHIFT.match}</Text></View>
+        <InfoRow icon="calendar-outline" text={MOCK_SHIFT.dateTime} />
+        <InfoRow icon="location-outline" text={MOCK_SHIFT.location} />
+        <Text style={styles.rate}>{MOCK_SHIFT.rate}</Text>
+        <Pressable style={styles.outlineButton} onPress={() => router.back()}>
+          <Text style={styles.outlineButtonText}>View shift</Text>
         </Pressable>
-
-        <PrimaryButton
-          title="Continue to submit"
-          onPress={() => router.push("/application-submit")}
-        />
-
-        {/* What happens next */}
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>What happens next</Text>
-
-          <TimelineItem
-            number="01"
-            title="Facility reviews"
-            description="The facility reviews your application and availability."
-            active
-          />
-
-          <TimelineItem
-            number="02"
-            title="Decision arrives"
-            description="You'll receive a notification when a decision is made."
-          />
-
-          <TimelineItem
-            number="03"
-            title="Shift confirmed"
-            description="Once accepted, your shift appears in Upcoming."
-          />
-        </View>
-      </ScrollView>
-    </View>
-  );
-}
-
-function Step({
-  number,
-  title,
-  active = false,
-}: {
-  number: string;
-  title: string;
-  active?: boolean;
-}) {
-  return (
-    <View style={styles.step}>
-      <View style={[styles.stepCircle, active && styles.activeStepCircle]}>
-        <Text style={[styles.stepNumber, active && styles.activeStepNumber]}>
-          {number}
-        </Text>
       </View>
 
-      <Text style={[styles.stepText, active && styles.activeStepText]}>
-        {title}
-      </Text>
-    </View>
+      <Text style={styles.sectionTitle}>Your details</Text>
+      <View style={styles.card}>
+        <Text style={styles.detailLabel}>Professional</Text>
+        <Text style={styles.detailValue}>{MOCK_WORKER.name}</Text>
+        <View style={styles.divider} />
+        <Text style={styles.detailLabel}>Professional licence</Text>
+        <View style={styles.verifiedRow}>
+          <Ionicons name="checkmark-circle" size={16} color={colors.success} />
+          <Text style={styles.verifiedText}>{MOCK_WORKER.licence}</Text>
+        </View>
+        <View style={styles.divider} />
+        <Text style={styles.detailLabel}>Availability</Text>
+        <Text style={styles.detailValue}>{MOCK_WORKER.availability}</Text>
+      </View>
+
+      <Text style={styles.sectionTitle}>Message to the facility</Text>
+      <AppInput value={message} onChangeText={setMessage} multiline numberOfLines={4} placeholder="Write a message..." />
+
+      <Pressable style={styles.secondaryButton} onPress={() => router.back()}>
+        <Text style={styles.secondaryButtonText}>Back to shift</Text>
+      </Pressable>
+      <PrimaryButton title="Continue to submit" onPress={() => router.push({ pathname: "/application-submit", params: { id } })} style={{ marginTop: spacing.sm }} />
+
+      <View style={styles.card}>
+        <Text style={styles.cardTitle}>What happens next</Text>
+        <TimelineItem number="01" title="Facility reviews" description="The facility reviews your application and availability." active />
+        <TimelineItem number="02" title="Decision arrives" description="You'll receive a notification when a decision is made." />
+        <TimelineItem number="03" title="Shift confirmed" description="Once accepted, your shift appears in Upcoming." />
+      </View>
+    </ScrollView>
   );
 }
 
-function InfoRow({
-  icon,
-  text,
-}: {
-  icon: keyof typeof Ionicons.glyphMap;
-  text: string;
-}) {
+function InfoRow({ icon, text }: { icon: keyof typeof Ionicons.glyphMap; text: string }) {
   return (
     <View style={styles.infoRow}>
-      <Ionicons name={icon} size={16} color="#667085" />
+      <Ionicons name={icon} size={18} color={colors.textSecondary} />
       <Text style={styles.infoText}>{text}</Text>
     </View>
   );
 }
 
-function TimelineItem({
-  number,
-  title,
-  description,
-  active = false,
-}: {
-  number: string;
-  title: string;
-  description: string;
-  active?: boolean;
-}) {
+function TimelineItem({ number, title, description, active = false }: { number: string; title: string; description: string; active?: boolean }) {
   return (
     <View style={styles.timelineItem}>
-      <View
-        style={[
-          styles.timelineNumber,
-          active && styles.timelineNumberActive,
-        ]}
-      >
-        <Text
-          style={[
-            styles.timelineNumberText,
-            active && styles.timelineNumberTextActive,
-          ]}
-        >
-          {number}
-        </Text>
+      <View style={[styles.timelineNumber, active && styles.timelineNumberActive]}>
+        <Text style={[styles.timelineNumberText, active && styles.timelineNumberTextActive]}>{number}</Text>
       </View>
-
-      <View style={styles.timelineContent}>
+      <View style={{ flex: 1, marginLeft: spacing.sm }}>
         <Text style={styles.timelineTitle}>{title}</Text>
         <Text style={styles.timelineDescription}>{description}</Text>
       </View>
@@ -266,317 +100,35 @@ function TimelineItem({
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#F8FAFC",
-  },
-
-  scrollContent: {
-    paddingBottom: 40,
-  },
-
-  header: {
-    height: 58,
-    backgroundColor: "#FFFFFF",
-    borderBottomWidth: 1,
-    borderBottomColor: "#EAECF0",
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: 18,
-  },
-
-  logo: {
-    fontSize: 11,
-    fontWeight: "800",
-    color: "#2563EB",
-    letterSpacing: 0.3,
-  },
-
-  logoCircle: {
-    fontSize: 10,
-  },
-
-  eyebrow: {
-    marginTop: 22,
-    marginHorizontal: 18,
-    fontSize: 9,
-    fontWeight: "800",
-    color: "#2563EB",
-    letterSpacing: 0.7,
-  },
-
-  title: {
-    marginTop: 7,
-    marginHorizontal: 18,
-    fontSize: 22,
-    fontWeight: "800",
-    color: "#101828",
-  },
-
-  subtitle: {
-    marginTop: 7,
-    marginHorizontal: 18,
-    fontSize: 12,
-    lineHeight: 18,
-    color: "#667085",
-  },
-
-  stepsContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: 18,
-    marginTop: 20,
-    marginBottom: 15,
-  },
-
-  step: {
-    alignItems: "center",
-  },
-
-  stepCircle: {
-    width: 23,
-    height: 23,
-    borderRadius: 12,
-    backgroundColor: "#EAECF0",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-
-  activeStepCircle: {
-    backgroundColor: "#2563EB",
-  },
-
-  stepNumber: {
-    fontSize: 10,
-    fontWeight: "700",
-    color: "#667085",
-  },
-
-  activeStepNumber: {
-    color: "#FFFFFF",
-  },
-
-  stepText: {
-    fontSize: 7,
-    marginTop: 4,
-    color: "#98A2B3",
-    fontWeight: "700",
-  },
-
-  activeStepText: {
-    color: "#2563EB",
-  },
-
-  stepLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: "#D0D5DD",
-    marginHorizontal: 5,
-    marginBottom: 14,
-  },
-
-  card: {
-    backgroundColor: "#FFFFFF",
-    borderWidth: 1,
-    borderColor: "#E4E7EC",
-    borderRadius: 12,
-    marginHorizontal: 18,
-    marginBottom: 14,
-    padding: 14,
-  },
-
-  cardTitle: {
-    fontSize: 11,
-    fontWeight: "800",
-    color: "#344054",
-    marginBottom: 12,
-  },
-
-  shiftTitle: {
-    fontSize: 14,
-    fontWeight: "800",
-    color: "#101828",
-  },
-
-  facility: {
-    fontSize: 10,
-    color: "#667085",
-    marginTop: 4,
-  },
-
-  matchPill: {
-    alignSelf: "flex-start",
-    backgroundColor: "#ECFDF3",
-    borderRadius: 20,
-    paddingHorizontal: 7,
-    paddingVertical: 4,
-    marginTop: 9,
-  },
-
-  matchText: {
-    color: "#039855",
-    fontSize: 8,
-    fontWeight: "800",
-  },
-
-  infoRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginTop: 11,
-  },
-
-  infoText: {
-    marginLeft: 7,
-    color: "#475467",
-    fontSize: 10,
-    flex: 1,
-  },
-
-  rate: {
-    fontSize: 11,
-    fontWeight: "800",
-    color: "#101828",
-    marginTop: 12,
-  },
-
-  outlineButton: {
-    height: 38,
-    borderWidth: 1,
-    borderColor: "#B2CCFF",
-    borderRadius: 7,
-    alignItems: "center",
-    justifyContent: "center",
-    marginTop: 12,
-  },
-
-  outlineButtonText: {
-    color: "#175CD3",
-    fontSize: 11,
-    fontWeight: "700",
-  },
-
-  sectionTitle: {
-    marginHorizontal: 18,
-    marginBottom: 8,
-    fontSize: 13,
-    fontWeight: "800",
-    color: "#101828",
-  },
-
-  detailCard: {
-    backgroundColor: "#FFFFFF",
-    borderWidth: 1,
-    borderColor: "#E4E7EC",
-    borderRadius: 12,
-    marginHorizontal: 18,
-    padding: 14,
-  },
-
-  detailLabel: {
-    fontSize: 9,
-    color: "#667085",
-    marginBottom: 4,
-  },
-
-  detailValue: {
-    fontSize: 11,
-    color: "#101828",
-    fontWeight: "600",
-  },
-
-  divider: {
-    height: 1,
-    backgroundColor: "#F2F4F7",
-    marginVertical: 12,
-  },
-
-  verifiedRow: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-
-  checkCircle: {
-    width: 18,
-    height: 18,
-    borderRadius: 9,
-    backgroundColor: "#ECFDF3",
-    justifyContent: "center",
-    alignItems: "center",
-    marginRight: 6,
-  },
-
-  verifiedText: {
-    color: "#039855",
-    fontSize: 10,
-    fontWeight: "600",
-  },
-
-  messageContainer: {
-    marginHorizontal: 18,
-    marginTop: 14,
-  },
-
-  backButton: {
-    marginHorizontal: 18,
-    height: 43,
-    borderWidth: 1,
-    borderColor: "#B2CCFF",
-    borderRadius: 8,
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: 9,
-  },
-
-  backButtonText: {
-    color: "#175CD3",
-    fontSize: 11,
-    fontWeight: "700",
-  },
-
-  timelineItem: {
-    flexDirection: "row",
-    marginBottom: 14,
-  },
-
-  timelineNumber: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: "#F2F4F7",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-
-  timelineNumberActive: {
-    backgroundColor: "#ECFDF3",
-  },
-
-  timelineNumberText: {
-    fontSize: 8,
-    color: "#667085",
-    fontWeight: "800",
-  },
-
-  timelineNumberTextActive: {
-    color: "#039855",
-  },
-
-  timelineContent: {
-    flex: 1,
-    marginLeft: 10,
-  },
-
-  timelineTitle: {
-    fontSize: 10,
-    fontWeight: "800",
-    color: "#101828",
-  },
-
-  timelineDescription: {
-    fontSize: 9,
-    lineHeight: 14,
-    color: "#667085",
-    marginTop: 2,
-  },
+  container: { flex: 1, backgroundColor: colors.background },
+  content: { paddingHorizontal: spacing.lg, paddingTop: spacing.xl, paddingBottom: spacing.xxl },
+  eyebrow: { ...typography.bodySmall, color: colors.primary, fontWeight: "700" },
+  title: { ...typography.h2, color: colors.text, marginTop: spacing.xs },
+  subtitle: { ...typography.bodySmall, color: colors.textSecondary, marginTop: spacing.xs, marginBottom: spacing.lg },
+  card: { backgroundColor: colors.white, borderWidth: 1, borderColor: colors.borderLight, borderRadius: radius.lg, padding: spacing.lg, marginBottom: spacing.lg },
+  cardTitle: { ...typography.label, fontWeight: "700", color: colors.text, marginBottom: spacing.sm },
+  shiftTitle: { ...typography.h3, color: colors.text },
+  facility: { ...typography.bodySmall, color: colors.textSecondary, marginTop: spacing.xs },
+  matchPill: { alignSelf: "flex-start", backgroundColor: "#ECFDF3", borderRadius: radius.round, paddingHorizontal: spacing.sm, paddingVertical: 4, marginTop: spacing.sm },
+  matchText: { color: colors.success, ...typography.bodySmall, fontWeight: "800" },
+  infoRow: { flexDirection: "row", alignItems: "center", marginTop: spacing.md, gap: spacing.sm },
+  infoText: { ...typography.bodySmall, color: colors.text, flex: 1 },
+  rate: { ...typography.label, fontWeight: "700", color: colors.text, marginTop: spacing.md },
+  outlineButton: { height: 44, borderWidth: 1, borderColor: colors.primary, borderRadius: radius.md, alignItems: "center", justifyContent: "center", marginTop: spacing.md },
+  outlineButtonText: { color: colors.primary, ...typography.label, fontWeight: "600" },
+  sectionTitle: { ...typography.label, fontWeight: "700", color: colors.text, marginBottom: spacing.sm },
+  detailLabel: { ...typography.bodySmall, color: colors.textSecondary },
+  detailValue: { ...typography.label, color: colors.text, fontWeight: "600", marginTop: 2 },
+  divider: { height: 1, backgroundColor: colors.card, marginVertical: spacing.md },
+  verifiedRow: { flexDirection: "row", alignItems: "center", gap: spacing.xs, marginTop: 2 },
+  verifiedText: { color: colors.success, ...typography.bodySmall, fontWeight: "600" },
+  secondaryButton: { height: 48, borderWidth: 1, borderColor: colors.primary, borderRadius: radius.md, alignItems: "center", justifyContent: "center", marginTop: spacing.lg },
+  secondaryButtonText: { color: colors.primary, ...typography.label, fontWeight: "600" },
+  timelineItem: { flexDirection: "row", marginBottom: spacing.md },
+  timelineNumber: { width: 32, height: 32, borderRadius: 16, backgroundColor: colors.card, alignItems: "center", justifyContent: "center" },
+  timelineNumberActive: { backgroundColor: "#ECFDF3" },
+  timelineNumberText: { ...typography.bodySmall, color: colors.textSecondary, fontWeight: "800" },
+  timelineNumberTextActive: { color: colors.success },
+  timelineTitle: { ...typography.label, fontWeight: "700", color: colors.text },
+  timelineDescription: { ...typography.bodySmall, color: colors.textSecondary, marginTop: 2 },
 });

@@ -12,7 +12,7 @@ export default function AccountCreatedScreen() {
       </View>
       <Text style={styles.title}>Account Created Successfully</Text>
       <Text style={styles.subtitle}>Your account has been created.{"\n"}Please check your email to verify your account.</Text>
-      <PrimaryButton title="Go to Login" onPress={() => router.replace("/login")} style={{ marginTop: spacing.xl }} />
+      <PrimaryButton title="Continue" onPress={() => router.replace("/credentials")}/>
       <Pressable style={{ marginTop: spacing.lg }}>
         <Text style={styles.link}>Didn't receive the email? <Text style={styles.linkBold}>Resend link</Text></Text>
       </Pressable>
