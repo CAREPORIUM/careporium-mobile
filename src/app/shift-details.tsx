@@ -6,6 +6,7 @@ import PrimaryButton from "@/components/ui/PrimaryButton";
 import { getShiftById } from "@/services/shift.service";
 import { Shift } from "@/types/shift";
 import { colors, radius, spacing, typography } from "@/constants/theme";
+import { goBack } from "@/utils/navigation";
 
 const naira = (n: number) => `₦${n.toLocaleString()}`;
 
@@ -27,20 +28,24 @@ export default function ShiftDetailsScreen() {
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+      <Pressable style={styles.backButton} onPress={() => goBack("/(tabs)/shifts")}>
+        <Ionicons name="arrow-back" size={20} color={colors.text} />
+      </Pressable>
+
       <Text style={styles.eyebrow}>SHIFT OPPORTUNITY</Text>
       <Text style={styles.title}>{shift.title}</Text>
       <Text style={styles.subtitle}>{shift.facility} · {shift.location}</Text>
 
       <View style={styles.pillRow}>
-        <View style={[styles.pill, { backgroundColor: "#DCFCE7" }]}>
+        <View style={[styles.pill, { backgroundColor: colors.successLight }]}>
           <Text style={[styles.pillText, { color: colors.success }]}>{shift.matchPercent}% MATCH</Text>
         </View>
         <View style={[styles.pill, { backgroundColor: colors.primaryLight }]}>
           <Text style={[styles.pillText, { color: colors.primary }]}>VERIFIED FACILITY</Text>
         </View>
         {shift.tag && (
-          <View style={[styles.pill, { backgroundColor: "#FEF3C7" }]}>
-            <Text style={[styles.pillText, { color: "#B45309" }]}>{shift.tag}</Text>
+          <View style={[styles.pill, { backgroundColor: colors.warningLight }]}>
+            <Text style={[styles.pillText, { color: colors.warning }]}>{shift.tag}</Text>
           </View>
         )}
       </View>
@@ -96,6 +101,7 @@ export default function ShiftDetailsScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
   content: { paddingHorizontal: spacing.lg, paddingTop: spacing.xl, paddingBottom: spacing.xxl },
+  backButton: { width: 44, height: 44, borderRadius: 999, backgroundColor: colors.white, alignItems: "center", justifyContent: "center", marginBottom: spacing.md, shadowColor: "#000", shadowOpacity: 0.1, shadowRadius: 4, elevation: 2 },
   eyebrow: { ...typography.bodySmall, color: colors.primary, fontWeight: "700" },
   title: { ...typography.h2, color: colors.text, marginTop: spacing.xs },
   subtitle: { ...typography.bodySmall, color: colors.textSecondary, marginTop: spacing.xs },
@@ -104,6 +110,7 @@ const styles = StyleSheet.create({
   pillText: { ...typography.bodySmall, fontWeight: "700" },
   card: { backgroundColor: colors.card, borderRadius: radius.lg, padding: spacing.lg, marginTop: spacing.lg },
   cardTitle: { ...typography.h3, color: colors.text },
+  cardText: { ...typography.bodySmall, color: colors.text },
   description: { ...typography.bodySmall, color: colors.text, marginTop: spacing.sm, lineHeight: 20 },
   infoBox: { borderWidth: 1, borderColor: colors.borderLight, borderRadius: radius.md, padding: spacing.md, marginTop: spacing.md },
   infoHeader: { flexDirection: "row", alignItems: "center", gap: spacing.xs },
@@ -113,6 +120,6 @@ const styles = StyleSheet.create({
   price: { ...typography.h1, color: colors.text, textDecorationLine: "line-through", textDecorationColor: colors.textSecondary },
   priceSubtitle: { ...typography.bodySmall, color: colors.textSecondary, marginTop: spacing.xs },
   applyNote: { ...typography.bodySmall, color: colors.textSecondary, marginTop: spacing.md },
-  closesPill: { backgroundColor: "#FEF3C7", alignSelf: "flex-start", borderRadius: radius.sm, paddingHorizontal: spacing.sm, paddingVertical: 4, marginTop: spacing.md },
-  closesPillText: { ...typography.bodySmall, color: "#B45309", fontWeight: "700" },
+  closesPill: { backgroundColor: colors.warningLight, alignSelf: "flex-start", borderRadius: radius.sm, paddingHorizontal: spacing.sm, paddingVertical: 4, marginTop: spacing.md },
+  closesPillText: { ...typography.bodySmall, color: colors.warning, fontWeight: "700" },
 });
