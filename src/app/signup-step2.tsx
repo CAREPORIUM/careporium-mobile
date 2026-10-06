@@ -6,6 +6,7 @@ import AppInput from "@/components/ui/AppInput";
 import AppSelect from "@/components/ui/AppSelect";
 import PrimaryButton from "@/components/ui/PrimaryButton";
 import { colors, spacing, typography } from "@/constants/theme";
+import { goBack } from "@/utils/navigation";
 
 // Placeholder lists until the backend confirms the real ones
 const PROFESSIONS = ["Doctor", "Nurse", "Pharmacist", "Lab Technician", "Other"];
@@ -21,7 +22,7 @@ export default function SignupStep2Screen() {
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: spacing.xxl }}>
-      <Pressable style={styles.backButton} onPress={() => router.back()}>
+      <Pressable style={styles.backButton} onPress={() => goBack("/signup")}>
         <Ionicons name="arrow-back" size={20} color={colors.text} />
       </Pressable>
       <Text style={styles.title}>Professional Profile</Text>

@@ -13,21 +13,14 @@ export default function LoginScreen() {
   const [hidePassword, setHidePassword] = useState(true);
   const [loading, setLoading] = useState(false);
 
-const handleLogin = () => {
-  setLoading(true);
-  setTimeout(() => {
-    setLoading(false);
-    router.replace("/(tabs)");
-  }, 1000);
-};
+  const handleLogin = () => {
+    setLoading(true);
+    setTimeout(() => {
+      setLoading(false);
+      router.replace("/(tabs)");
+    }, 1000);
+  };
 
-const handleForgotPassword = () => {
-  setLoading(true);
-  setTimeout(() => {
-    setLoading(false);
-    router.replace("/reset-password"); 
-  }, 1000);
-};
   return (
     <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: spacing.xxl }}>
       <Text style={styles.title}>Welcome Back</Text>
@@ -61,7 +54,7 @@ const handleForgotPassword = () => {
         }
       />
 
-      <Pressable style={styles.forgotWrap} onPress={handleForgotPassword}>
+      <Pressable style={styles.forgotWrap} onPress={() => router.push("/reset-password")}>
         <Text style={styles.forgotText}>Forget Password?</Text>
       </Pressable>
 

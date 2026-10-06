@@ -1,4 +1,3 @@
-
 import { useRef, useState } from "react";
 import {
   View,
@@ -11,6 +10,7 @@ import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import PrimaryButton from "@/components/ui/PrimaryButton";
 import { colors, spacing, typography } from "@/constants/theme";
+import { goBack } from "@/utils/navigation";
 
 export default function ResetPasswordScreen() {
   const [code, setCode] = useState("");
@@ -24,7 +24,7 @@ export default function ResetPasswordScreen() {
     <View style={styles.container}>
       <Pressable
         style={styles.backButton}
-        onPress={() => router.back()}
+        onPress={() => goBack("/login")}
         accessibilityLabel="Go back"
       >
         <Ionicons

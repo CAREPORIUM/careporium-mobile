@@ -21,6 +21,12 @@ export const colors = {
   primaryLight: "#EAF0FD",
   card: "#F9FAFB",
   success: "#16A34A",
+
+  warning: "#B54708",
+  warningLight: "#FFFAEB",
+
+  successLight: "#ECFDF3",
+  errorLight: "#FEE2E2",
 } as const;
 
 export const spacing = {

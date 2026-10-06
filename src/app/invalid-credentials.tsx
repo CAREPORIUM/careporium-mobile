@@ -1,9 +1,9 @@
-
 import { View, Text, StyleSheet, Pressable } from "react-native";
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import PrimaryButton from "@/components/ui/PrimaryButton";
 import { colors, spacing, typography } from "@/constants/theme";
+import { goBack } from "@/utils/navigation";
 
 export default function InvalidCredentialsScreen() {
   return (
@@ -25,7 +25,7 @@ export default function InvalidCredentialsScreen() {
 
       <PrimaryButton
         title="Try Again"
-        onPress={() => router.back()}
+        onPress={() => goBack("/login")}
         style={styles.tryAgain}
       />
 
@@ -59,7 +59,7 @@ const styles = StyleSheet.create({
     width: 120,
     height: 120,
     borderRadius: 60,
-    backgroundColor: "#FDE2E2",
+    backgroundColor: colors.errorLight,
     alignItems: "center",
     justifyContent: "center",
     marginBottom: spacing.lg,

@@ -9,7 +9,7 @@ export default function VerifiedScreen() {
       title="Verified"
       text="Your profile has been verified. You can now start receiving opportunities"
       buttonTitle="View profile"
-      onPress={() => router.push("/profile")}
+      onPress={() => router.push("/(tabs)/profile")}
     />
   );
 }

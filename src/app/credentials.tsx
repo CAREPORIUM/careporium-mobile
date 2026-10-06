@@ -6,6 +6,7 @@ import AppInput from "@/components/ui/AppInput";
 import PrimaryButton from "@/components/ui/PrimaryButton";
 import UploadBox, { PickedFile } from "@/components/ui/UploadBox";
 import { colors, radius, spacing, typography } from "@/constants/theme";
+import { goBack } from "@/utils/navigation";
 
 const STEP_NAMES = ["Professional License", "Identification Document", "Education Certificate", "Proof of Address"];
 const ID_TYPES = ["National ID", "Driver's License", "Passport"];
@@ -72,14 +73,14 @@ export default function CredentialsScreen() {
   const [education, setEducation] = useState<PickedFile | null>(null);
   const [address, setAddress] = useState<PickedFile | null>(null);
 
-  const goBack = () => (step > 1 ? setStep(step - 1) : router.back());
+  const handleBack = () => (step > 1 ? setStep(step - 1) : goBack("/(tabs)/profile"));
 
   // Step 1, nothing picked yet: intro screen with the 4-step list
   if (step === 1 && !license) {
     return (
       <ScrollView style={styles.container} contentContainerStyle={styles.content}>
         <View style={styles.topBar}>
-          <BackButton onPress={goBack} />
+          <BackButton onPress={handleBack} />
           <Text style={styles.brand}>CAREPORIUM</Text>
           <View style={{ width: 44 }} />
         </View>
@@ -105,7 +106,7 @@ export default function CredentialsScreen() {
     const valid = licenseNumber && issuingState && expiry;
     return (
       <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-        <TopBar onBack={goBack} title="Professional License" step={1} />
+        <TopBar onBack={handleBack} title="Professional License" step={1} />
         <SecureBanner />
         <Text style={styles.blueTitle}>Upload Professional License</Text>
         <Text style={styles.subtitle}>Make sure the document is clear, valid and not expired.</Text>
@@ -130,7 +131,7 @@ export default function CredentialsScreen() {
   if (step === 2) {
     return (
       <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-        <TopBar onBack={goBack} title="ID Document" step={2} />
+        <TopBar onBack={handleBack} title="ID Document" step={2} />
         <SecureBanner />
         <Text style={styles.blueTitle}>Upload ID Document</Text>
         <Text style={styles.subtitle}>Provide a government-issued ID for identity verification.</Text>
@@ -153,7 +154,7 @@ export default function CredentialsScreen() {
   // Step 3: education certificate + proof of address on one screen, as in the design
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <TopBar onBack={goBack} />
+      <TopBar onBack={handleBack} />
       <View style={styles.sectionRow}>
         <Text style={styles.sectionTitle}>Education Certificate</Text>
         <Text style={styles.stepLabel}>Step 3 of 4</Text>

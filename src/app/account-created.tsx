@@ -12,13 +12,9 @@ export default function AccountCreatedScreen() {
       </View>
       <Text style={styles.title}>Account Created Successfully</Text>
       <Text style={styles.subtitle}>Your account has been created.{"\n"}Please check your email to verify your account.</Text>
-      <PrimaryButton title="Go to Login" onPress={() => router.replace("/login")} style={{ marginTop: spacing.xl }} />
+      <PrimaryButton title="Continue" onPress={() => router.replace("/credentials")} />
       <Pressable style={{ marginTop: spacing.lg }}>
         <Text style={styles.link}>Didn't receive the email? <Text style={styles.linkBold}>Resend link</Text></Text>
-      </Pressable>
-      <View style={styles.divider} />
-      <Pressable onPress={() => router.replace("/login")}>
-        <Text style={styles.linkBold}>Back to login</Text>
       </Pressable>
     </View>
   );
@@ -26,10 +22,9 @@ export default function AccountCreatedScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background, alignItems: "center", paddingHorizontal: spacing.lg, paddingTop: spacing.xxl * 2 },
-  iconCircle: { width: 96, height: 96, borderRadius: 48, backgroundColor: "#EFF4FE", alignItems: "center", justifyContent: "center", marginBottom: spacing.xl },
+  iconCircle: { width: 96, height: 96, borderRadius: 48, backgroundColor: colors.primaryLight, alignItems: "center", justifyContent: "center", marginBottom: spacing.xl },
   title: { ...typography.h2, color: colors.text, textAlign: "center" },
   subtitle: { ...typography.body, color: colors.textSecondary, textAlign: "center", marginTop: spacing.md },
   link: { ...typography.bodySmall, color: colors.text, textAlign: "center" },
   linkBold: { color: colors.primary, fontWeight: "600" },
-  divider: { height: 1, width: "100%", backgroundColor: colors.borderLight, marginVertical: spacing.xl },
 });

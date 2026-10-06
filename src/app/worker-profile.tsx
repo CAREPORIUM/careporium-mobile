@@ -1,8 +1,8 @@
 import { useState } from "react";
-import { View, Text, StyleSheet, Pressable, ScrollView, Image } from "react-native";
-import { router } from "expo-router";
+import { View, Text, StyleSheet, Pressable, ScrollView } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { colors, radius, spacing, typography } from "@/constants/theme";
+import { goBack } from "@/utils/navigation";
 
 const TABS = ["About", "Experience", "Skills", "Reviews"];
 
@@ -46,14 +46,14 @@ function Stars({ count, size = 14 }: { count: number; size?: number }) {
   );
 }
 
-export default function ProfileScreen() {
+export default function WorkerProfileScreen() {
   const [activeTab, setActiveTab] = useState("About");
   const p = MOCK_PROFILE;
 
   return (
     <ScrollView style={styles.container}>
       <View style={styles.headerImage}>
-        <Pressable style={[styles.iconButton, styles.backButton]} onPress={() => router.back()}>
+        <Pressable style={[styles.iconButton, styles.backButton]} onPress={() => goBack("/(tabs)/shifts")}>
           <Ionicons name="arrow-back" size={20} color={colors.text} />
         </Pressable>
         <Pressable style={[styles.iconButton, styles.shareButton]}>

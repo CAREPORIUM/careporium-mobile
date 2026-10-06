@@ -36,7 +36,7 @@ export default function CredentialsSubmittedScreen() {
       ))}
 
       <View style={{ flex: 1 }} />
-      <PrimaryButton title="Back to Profile" onPress={() => router.replace("/profile")} />
+      <PrimaryButton title="Back to Profile" onPress={() => router.replace("/(tabs)/profile")} />
     </View>
   );
 }

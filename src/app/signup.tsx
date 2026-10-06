@@ -5,6 +5,7 @@ import { Ionicons } from "@expo/vector-icons";
 import AppInput from "@/components/ui/AppInput";
 import PrimaryButton from "@/components/ui/PrimaryButton";
 import { colors, spacing, typography } from "@/constants/theme";
+import { goBack } from "@/utils/navigation";
 
 export default function SignupScreen() {
   const [fullName, setFullName] = useState("");
@@ -21,7 +22,7 @@ export default function SignupScreen() {
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: spacing.xxl }}>
-      <Pressable style={styles.backButton} onPress={() => router.back()}>
+      <Pressable style={styles.backButton} onPress={() => goBack("/role-selection")}>
         <Ionicons name="arrow-back" size={20} color={colors.text} />
       </Pressable>
       <Text style={styles.title}>Professional Profile</Text>
