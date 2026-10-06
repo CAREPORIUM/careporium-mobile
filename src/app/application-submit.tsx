@@ -4,6 +4,7 @@ import { router } from "expo-router";
 import PrimaryButton from "@/components/ui/PrimaryButton";
 import StepIndicator from "@/components/ui/StepIndicator";
 import { colors, radius, spacing, typography } from "@/constants/theme";
+import { goBack } from "@/utils/navigation";
 
 const MOCK_SHIFT = {
   title: "Registered Nurse · Acute Care",
@@ -51,7 +52,7 @@ export default function ApplicationSubmit() {
         <Text style={styles.noticeText}>By submitting, you confirm that your availability and professional credentials are accurate.</Text>
       </View>
 
-      <Pressable style={styles.backButton} onPress={() => router.back()}>
+      <Pressable style={styles.backButton} onPress={() => goBack("/application-review")}>
         <Text style={styles.backText}>Back to review</Text>
       </Pressable>
       <PrimaryButton title="Submit application" onPress={() => router.replace("/application-submitted")} style={{ marginTop: spacing.sm }} />
@@ -94,7 +95,7 @@ const styles = StyleSheet.create({
   cardHeading: { ...typography.label, fontWeight: "700", color: colors.text, marginBottom: spacing.sm },
   jobTitle: { ...typography.h3, color: colors.text },
   facility: { ...typography.bodySmall, color: colors.textSecondary, marginTop: spacing.xs },
-  matchPill: { alignSelf: "flex-start", backgroundColor: "#ECFDF3", borderRadius: radius.round, paddingHorizontal: spacing.sm, paddingVertical: 4, marginTop: spacing.sm },
+  matchPill: { alignSelf: "flex-start", backgroundColor: colors.successLight, borderRadius: radius.round, paddingHorizontal: spacing.sm, paddingVertical: 4, marginTop: spacing.sm },
   matchText: { color: colors.success, ...typography.bodySmall, fontWeight: "800" },
   row: { flexDirection: "row", alignItems: "center", marginTop: spacing.md, gap: spacing.sm },
   rowText: { ...typography.bodySmall, color: colors.text },

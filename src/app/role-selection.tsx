@@ -2,11 +2,12 @@ import { View, Text, Pressable, StyleSheet } from "react-native";
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { colors, spacing, radius, typography } from "@/constants/theme";
+import { goBack } from "@/utils/navigation";
 
 export default function RoleSelectionScreen() {
   return (
     <View style={styles.container}>
-      <Pressable style={styles.backButton} onPress={() => router.back()}>
+      <Pressable style={styles.backButton} onPress={() => goBack("/login")}>
         <Ionicons name="arrow-back" size={20} color={colors.text} />
       </Pressable>
       <Text style={styles.title}>Create Account</Text>

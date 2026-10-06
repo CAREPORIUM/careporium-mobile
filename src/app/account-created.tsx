@@ -16,10 +16,6 @@ export default function AccountCreatedScreen() {
       <Pressable style={{ marginTop: spacing.lg }}>
         <Text style={styles.link}>Didn't receive the email? <Text style={styles.linkBold}>Resend link</Text></Text>
       </Pressable>
-      <View style={styles.divider} />
-      <Pressable onPress={() => router.replace("/login")}>
-        <Text style={styles.linkBold}>Back to login</Text>
-      </Pressable>
     </View>
   );
 }

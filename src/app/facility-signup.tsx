@@ -8,6 +8,7 @@ import PrimaryButton from "@/components/ui/PrimaryButton";
 import UploadRow from "@/components/ui/UploadRow";
 import type { PickedFile } from "@/components/ui/UploadBox";
 import { colors, radius, spacing, typography } from "@/constants/theme";
+import { goBack } from "@/utils/navigation";
 
 const FACILITY_TYPES = ["Hospital", "Clinic", "Medical Lab", "Pharmacy", "Home Care", "Other"];
 
@@ -59,12 +60,12 @@ export default function FacilitySignupScreen() {
   const step2Valid = regCert && license && tin;
   const step3Valid = fullName && position && personnelEmail && personnelPhone;
 
-  const goBack = () => (step > 1 ? setStep(step - 1) : router.back());
+  const handleBack = () => (step > 1 ? setStep(step - 1) : goBack("/role-selection"));
 
   if (step === 1) {
     return (
       <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-        <Pressable style={styles.backButtonAlone} onPress={goBack}>
+        <Pressable style={styles.backButtonAlone} onPress={handleBack}>
           <Ionicons name="arrow-back" size={20} color={colors.text} />
         </Pressable>
         <Text style={styles.title}>Facility Information</Text>
@@ -116,7 +117,7 @@ export default function FacilitySignupScreen() {
   if (step === 2) {
     return (
       <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-        <TopBar onBack={goBack} title="Facility Document" subtitle="Upload the required documents to verify your healthcare facility." step={2} />
+        <TopBar onBack={handleBack} title="Facility Document" subtitle="Upload the required documents to verify your healthcare facility." step={2} />
 
         <View style={styles.notice}>
           <Ionicons name="information-circle" size={20} color={colors.primary} />
@@ -133,7 +134,7 @@ export default function FacilitySignupScreen() {
         <UploadRow placeholder="Upload your facility's tax identification document." file={tin} onChange={setTin} />
 
         <PrimaryButton title="Next" disabled={!step2Valid} onPress={() => setStep(3)} style={{ marginTop: spacing.xl }} />
-        <Pressable style={styles.backTextButton} onPress={goBack}>
+        <Pressable style={styles.backTextButton} onPress={handleBack}>
           <Text style={styles.backTextLabel}>Back</Text>
         </Pressable>
       </ScrollView>
@@ -143,7 +144,7 @@ export default function FacilitySignupScreen() {
   if (step === 3) {
     return (
       <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-        <TopBar onBack={goBack} title="Facility Personnel" subtitle="Provide details about key person at your facility." step={3} />
+        <TopBar onBack={handleBack} title="Facility Personnel" subtitle="Provide details about key person at your facility." step={3} />
 
         <Text style={styles.label}>Full Name</Text>
         <AppInput placeholder="Luke Marcus" value={fullName} onChangeText={setFullName}
@@ -164,7 +165,7 @@ export default function FacilitySignupScreen() {
         <Text style={styles.footnote}>You can update this information later in account settings</Text>
 
         <PrimaryButton title="Next" disabled={!step3Valid} onPress={() => setStep(4)} style={{ marginTop: spacing.lg }} />
-        <Pressable style={styles.backTextButton} onPress={goBack}>
+        <Pressable style={styles.backTextButton} onPress={handleBack}>
           <Text style={styles.backTextLabel}>Back</Text>
         </Pressable>
       </ScrollView>
@@ -174,7 +175,7 @@ export default function FacilitySignupScreen() {
   // Step 4: Review & Submit
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <TopBar onBack={goBack} title="Review & Submit" subtitle="Please review your information before submitting." step={4} />
+      <TopBar onBack={handleBack} title="Review & Submit" subtitle="Please review your information before submitting." step={4} />
 
       <View style={styles.reviewSectionHeader}>
         <Text style={styles.reviewSectionTitle}>Basic information</Text>
@@ -216,7 +217,7 @@ export default function FacilitySignupScreen() {
       </View>
 
       <PrimaryButton title="Submit" disabled={!agreedFinal} onPress={() => router.replace("/facility-registration-submitted")} style={{ marginTop: spacing.lg }} />
-      <Pressable style={styles.backTextButton} onPress={goBack}>
+      <Pressable style={styles.backTextButton} onPress={handleBack}>
         <Text style={styles.backTextLabel}>Back</Text>
       </Pressable>
     </ScrollView>

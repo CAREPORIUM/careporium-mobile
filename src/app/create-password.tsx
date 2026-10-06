@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import {
   View,
@@ -12,6 +11,7 @@ import { Ionicons } from "@expo/vector-icons";
 import AppInput from "@/components/ui/AppInput";
 import PrimaryButton from "@/components/ui/PrimaryButton";
 import { colors, spacing, typography } from "@/constants/theme";
+import { goBack } from "@/utils/navigation";
 
 export default function CreatePasswordScreen() {
   const [password, setPassword] = useState("");
@@ -43,7 +43,7 @@ export default function CreatePasswordScreen() {
             : "ellipse-outline"
         }
         size={19}
-        color={passed ? "#16A34A" : colors.placeholder}
+        color={passed ? colors.success : colors.placeholder}
       />
       <Text
         style={[
@@ -64,7 +64,7 @@ export default function CreatePasswordScreen() {
     >
       <Pressable
         style={styles.backButton}
-        onPress={() => router.back()}
+        onPress={() => goBack("/login")}
         accessibilityLabel="Go back"
       >
         <Ionicons
@@ -248,7 +248,7 @@ const styles = StyleSheet.create({
     color: colors.placeholder,
   },
   passedRuleText: {
-    color: "#16A34A",
+    color: colors.success,
   },
   errorText: {
     ...typography.bodySmall,

@@ -21,13 +21,7 @@ const handleLogin = () => {
   }, 1000);
 };
 
-const handleForgotPassword = () => {
-  setLoading(true);
-  setTimeout(() => {
-    setLoading(false);
-    router.replace("/reset-password"); 
-  }, 1000);
-};
+
   return (
     <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: spacing.xxl }}>
       <Text style={styles.title}>Welcome Back</Text>
@@ -61,7 +55,7 @@ const handleForgotPassword = () => {
         }
       />
 
-      <Pressable style={styles.forgotWrap} onPress={handleForgotPassword}>
+      <Pressable style={styles.forgotWrap} onPress={() => router.push("/reset-password")}>
         <Text style={styles.forgotText}>Forget Password?</Text>
       </Pressable>
 

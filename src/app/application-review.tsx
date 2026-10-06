@@ -6,6 +6,7 @@ import AppInput from "@/components/ui/AppInput";
 import PrimaryButton from "@/components/ui/PrimaryButton";
 import StepIndicator from "@/components/ui/StepIndicator";
 import { colors, radius, spacing, typography } from "@/constants/theme";
+import { goBack } from "@/utils/navigation";
 
 // Mock — should use the shift id param once connected to real shift data
 const MOCK_SHIFT = {
@@ -38,7 +39,7 @@ export default function ApplicationReview() {
         <InfoRow icon="calendar-outline" text={MOCK_SHIFT.dateTime} />
         <InfoRow icon="location-outline" text={MOCK_SHIFT.location} />
         <Text style={styles.rate}>{MOCK_SHIFT.rate}</Text>
-        <Pressable style={styles.outlineButton} onPress={() => router.back()}>
+        <Pressable style={styles.outlineButton} onPress={() => goBack("/(tabs)/shifts")}>
           <Text style={styles.outlineButtonText}>View shift</Text>
         </Pressable>
       </View>
@@ -61,7 +62,7 @@ export default function ApplicationReview() {
       <Text style={styles.sectionTitle}>Message to the facility</Text>
       <AppInput value={message} onChangeText={setMessage} multiline numberOfLines={4} placeholder="Write a message..." />
 
-      <Pressable style={styles.secondaryButton} onPress={() => router.back()}>
+      <Pressable style={styles.secondaryButton} onPress={() => goBack("/(tabs)/shifts")}>
         <Text style={styles.secondaryButtonText}>Back to shift</Text>
       </Pressable>
       <PrimaryButton title="Continue to submit" onPress={() => router.push({ pathname: "/application-submit", params: { id } })} style={{ marginTop: spacing.sm }} />
@@ -109,7 +110,7 @@ const styles = StyleSheet.create({
   cardTitle: { ...typography.label, fontWeight: "700", color: colors.text, marginBottom: spacing.sm },
   shiftTitle: { ...typography.h3, color: colors.text },
   facility: { ...typography.bodySmall, color: colors.textSecondary, marginTop: spacing.xs },
-  matchPill: { alignSelf: "flex-start", backgroundColor: "#ECFDF3", borderRadius: radius.round, paddingHorizontal: spacing.sm, paddingVertical: 4, marginTop: spacing.sm },
+  matchPill: { alignSelf: "flex-start", backgroundColor: colors.successLight, borderRadius: radius.round, paddingHorizontal: spacing.sm, paddingVertical: 4, marginTop: spacing.sm },
   matchText: { color: colors.success, ...typography.bodySmall, fontWeight: "800" },
   infoRow: { flexDirection: "row", alignItems: "center", marginTop: spacing.md, gap: spacing.sm },
   infoText: { ...typography.bodySmall, color: colors.text, flex: 1 },
@@ -126,7 +127,7 @@ const styles = StyleSheet.create({
   secondaryButtonText: { color: colors.primary, ...typography.label, fontWeight: "600" },
   timelineItem: { flexDirection: "row", marginBottom: spacing.md },
   timelineNumber: { width: 32, height: 32, borderRadius: 16, backgroundColor: colors.card, alignItems: "center", justifyContent: "center" },
-  timelineNumberActive: { backgroundColor: "#ECFDF3" },
+  timelineNumberActive: { backgroundColor: colors.successLight },
   timelineNumberText: { ...typography.bodySmall, color: colors.textSecondary, fontWeight: "800" },
   timelineNumberTextActive: { color: colors.success },
   timelineTitle: { ...typography.label, fontWeight: "700", color: colors.text },
