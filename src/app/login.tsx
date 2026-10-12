@@ -1,24 +1,51 @@
 import { useState } from "react";
-import { View, Text, StyleSheet, Pressable, ScrollView } from "react-native";
+import { View, Text, StyleSheet, Pressable, ScrollView, Alert } from "react-native";
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import AppInput from "@/components/ui/AppInput";
 import PrimaryButton from "@/components/ui/PrimaryButton";
 import SecondaryButton from "@/components/ui/SecondaryButton";
+import { login } from "@/services/auth.service";
+import { useAuth } from "@/context/AuthContext";
 import { colors, spacing, typography } from "@/constants/theme";
 
 export default function LoginScreen() {
+  const { setUser } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [hidePassword, setHidePassword] = useState(true);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
-  const handleLogin = () => {
+  const handleLogin = async () => {
+    if (!email.trim() || !password) {
+      setError("Enter your email and password.");
+      return;
+    }
+
+    setError("");
     setLoading(true);
-    setTimeout(() => {
+    try {
+      const user = await login(email, password);
+      setUser(user);
+
+      if (user.role === "admin") {
+        router.replace("/admin");
+      } else if (user.role === "worker") {
+        router.replace("/(tabs)");
+      } else {
+        Alert.alert("Facility dashboard", "The facility experience is coming soon.");
+      }
+    } catch (e: any) {
+      const msg: string = e.message ?? "Something went wrong. Try again.";
+      if (msg.toLowerCase().includes("not verified")) {
+        router.push({ pathname: "/verify-otp", params: { email: email.trim().toLowerCase() } });
+        return;
+      }
+      setError(msg);
+    } finally {
       setLoading(false);
-      router.replace("/(tabs)");
-    }, 1000);
+    }
   };
 
   return (
@@ -58,6 +85,8 @@ export default function LoginScreen() {
         <Text style={styles.forgotText}>Forget Password?</Text>
       </Pressable>
 
+      {error ? <Text style={styles.errorText}>{error}</Text> : null}
+
       <PrimaryButton title="Log in" onPress={handleLogin} loading={loading} style={{ marginTop: spacing.lg }} />
 
       <View style={styles.dividerRow}>
@@ -81,6 +110,11 @@ export default function LoginScreen() {
           Don't have an account? <Text style={styles.footerLink}>Sign up</Text>
         </Text>
       </Pressable>
+      <Pressable style={styles.footer} onPress={() => router.push("/admin/login")}>
+        <Text style={styles.footerText}>
+          Platform administrator? <Text style={styles.footerLink}>Admin sign in</Text>
+        </Text>
+      </Pressable>
     </ScrollView>
   );
 }
@@ -92,6 +126,7 @@ const styles = StyleSheet.create({
   label: { ...typography.label, color: colors.text, marginBottom: spacing.sm },
   forgotWrap: { alignSelf: "flex-end", marginTop: spacing.sm },
   forgotText: { ...typography.bodySmall, color: colors.primary },
+  errorText: { ...typography.bodySmall, color: colors.error, marginTop: spacing.md },
   dividerRow: { flexDirection: "row", alignItems: "center", marginVertical: spacing.lg },
   dividerLine: { flex: 1, height: 1, backgroundColor: colors.borderLight },
   dividerText: { marginHorizontal: spacing.sm, color: colors.textSecondary, ...typography.bodySmall },

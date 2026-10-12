@@ -5,6 +5,8 @@ import { Ionicons } from "@expo/vector-icons";
 import AppInput from "@/components/ui/AppInput";
 import AppSelect from "@/components/ui/AppSelect";
 import PrimaryButton from "@/components/ui/PrimaryButton";
+import { registerWorker } from "@/services/auth.service";
+import { getSignupDraft, clearSignupDraft } from "@/utils/signupDraft";
 import { colors, spacing, typography } from "@/constants/theme";
 import { goBack } from "@/utils/navigation";
 
@@ -17,8 +19,46 @@ export default function SignupStep2Screen() {
   const [specialty, setSpecialty] = useState<string | null>(null);
   const [experience, setExperience] = useState("");
   const [agreed, setAgreed] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   const isValid = profession && specialty && experience && agreed;
+
+  const handleRegister = async () => {
+    const draft = getSignupDraft();
+    if (!draft) {
+      setError("Your details were lost. Please go back and fill in step 1 again.");
+      return;
+    }
+
+    const years = parseInt(experience.replace(/\D/g, ""), 10);
+    if (Number.isNaN(years)) {
+      setError("Enter your years of experience as a number.");
+      return;
+    }
+
+    setError("");
+    setLoading(true);
+    try {
+      await registerWorker({
+        fullName: draft.fullName,
+        email: draft.email,
+        phoneNumber: draft.phoneNumber,
+        password: draft.password,
+        profession: profession as string,
+        specialty: specialty as string,
+        yearsOfExperience: years,
+        location: { address: draft.location, country: "Nigeria" },
+      });
+      clearSignupDraft();
+      router.dismissAll();
+      router.replace({ pathname: "/verify-otp", params: { email: draft.email } });
+    } catch (e: any) {
+      setError(e.message ?? "Something went wrong. Try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: spacing.xxl }}>
@@ -47,7 +87,9 @@ export default function SignupStep2Screen() {
         <Text style={styles.checkboxLabel}>I agree to the terms & conditions for careporium</Text>
       </Pressable>
 
-      <PrimaryButton title="Register" disabled={!isValid} onPress={() => router.push("/account-created")} style={{ marginTop: spacing.lg }} />
+      {error ? <Text style={styles.errorText}>{error}</Text> : null}
+
+      <PrimaryButton title="Register" disabled={!isValid} loading={loading} onPress={handleRegister} style={{ marginTop: spacing.lg }} />
       <Text style={styles.footnote}>You can update this information later in account settings</Text>
     </ScrollView>
   );
@@ -64,5 +106,6 @@ const styles = StyleSheet.create({
   checkbox: { width: 22, height: 22, borderRadius: 4, borderWidth: 1, borderColor: colors.primary, alignItems: "center", justifyContent: "center" },
   checkboxChecked: { backgroundColor: colors.primary },
   checkboxLabel: { ...typography.bodySmall, color: colors.text, flex: 1 },
+  errorText: { ...typography.bodySmall, color: colors.error, marginTop: spacing.md },
   footnote: { ...typography.bodySmall, color: colors.textSecondary, textAlign: "center", marginTop: spacing.md },
 });

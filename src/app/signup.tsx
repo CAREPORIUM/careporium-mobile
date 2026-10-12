@@ -4,6 +4,7 @@ import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import AppInput from "@/components/ui/AppInput";
 import PrimaryButton from "@/components/ui/PrimaryButton";
+import { setSignupDraft } from "@/utils/signupDraft";
 import { colors, spacing, typography } from "@/constants/theme";
 import { goBack } from "@/utils/navigation";
 
@@ -16,9 +17,30 @@ export default function SignupScreen() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [hidePassword, setHidePassword] = useState(true);
   const [hideConfirm, setHideConfirm] = useState(true);
+  const [error, setError] = useState("");
 
-  const isValid =
+  const isFilled =
     fullName && email && phone && location && password && confirmPassword && password === confirmPassword;
+
+  const handleContinue = () => {
+    if (!/^\S+@\S+\.\S+$/.test(email.trim())) {
+      setError("Enter a valid email address.");
+      return;
+    }
+    if (password.length < 8) {
+      setError("Password must be at least 8 characters.");
+      return;
+    }
+    setError("");
+    setSignupDraft({
+      fullName: fullName.trim(),
+      email: email.trim().toLowerCase(),
+      phoneNumber: phone.trim(),
+      location: location.trim(),
+      password,
+    });
+    router.push("/signup-step2");
+  };
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: spacing.xxl }}>
@@ -59,7 +81,9 @@ export default function SignupScreen() {
           <Ionicons name={hideConfirm ? "eye-off-outline" : "eye-outline"} size={20} color={colors.placeholder} />
         </Pressable>} />
 
-      <PrimaryButton title="Continue" disabled={!isValid} onPress={() => router.push("/signup-step2")} style={{ marginTop: spacing.xl }} />
+      {error ? <Text style={styles.errorText}>{error}</Text> : null}
+
+      <PrimaryButton title="Continue" disabled={!isFilled} onPress={handleContinue} style={{ marginTop: spacing.xl }} />
     </ScrollView>
   );
 }
@@ -71,4 +95,5 @@ const styles = StyleSheet.create({
   subtitle: { ...typography.body, color: colors.textSecondary, marginTop: spacing.xs },
   step: { ...typography.h3, color: colors.text, marginTop: spacing.lg, marginBottom: spacing.lg },
   label: { ...typography.label, color: colors.text, marginBottom: spacing.sm },
+  errorText: { ...typography.bodySmall, color: colors.error, marginTop: spacing.md },
 });

@@ -22,8 +22,15 @@ export default function HomeScreen() {
   const m = MOCK;
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <Text style={styles.eyebrow}>YOUR WORKSPACE</Text>
-      <Text style={styles.title}>Good morning, {m.name}.</Text>
+      <View style={styles.headerRow}>
+        <View style={styles.headerText}>
+          <Text style={styles.eyebrow}>YOUR WORKSPACE</Text>
+          <Text style={styles.title}>Good morning, {m.name}.</Text>
+        </View>
+        <Pressable style={styles.bellButton} onPress={() => router.push("/notifications")}>
+          <Ionicons name="notifications-outline" size={24} color={colors.text} />
+        </Pressable>
+      </View>
       <Text style={styles.subtitle}>Your shifts, applications, and earnings in one place.</Text>
 
       <PrimaryButton title="Find shifts" onPress={() => router.push("/(tabs)/shifts")} style={{ marginTop: spacing.lg }} />
@@ -86,6 +93,9 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
   content: { paddingHorizontal: spacing.lg, paddingTop: spacing.xl, paddingBottom: spacing.xxl },
+  headerRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" },
+  headerText: { flex: 1, marginRight: spacing.md },
+  bellButton: { width: 44, height: 44, borderRadius: radius.round, backgroundColor: colors.card, alignItems: "center", justifyContent: "center" },
   eyebrow: { ...typography.bodySmall, color: colors.primary, fontWeight: "700" },
   title: { ...typography.h2, color: colors.text, marginTop: spacing.xs },
   subtitle: { ...typography.bodySmall, color: colors.textSecondary, marginTop: spacing.xs },
