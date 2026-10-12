@@ -6,16 +6,16 @@ import AppInput from "@/components/ui/AppInput";
 import PrimaryButton from "@/components/ui/PrimaryButton";
 import SecondaryButton from "@/components/ui/SecondaryButton";
 import { login } from "@/services/auth.service";
-import { colors, spacing, typography } from "@/constants/theme";
 import { useAuth } from "@/context/AuthContext";
+import { colors, spacing, typography } from "@/constants/theme";
 
 export default function LoginScreen() {
+  const { setUser } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [hidePassword, setHidePassword] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const { setUser } = useAuth();
 
   const handleLogin = async () => {
     if (!email.trim() || !password) {
@@ -29,11 +29,6 @@ export default function LoginScreen() {
       const user = await login(email, password);
       setUser(user);
 
-      if (!user.isVerified) {
-        router.push({ pathname: "/verify-otp", params: { email: email.trim().toLowerCase() } });
-        return;
-      }
-
       if (user.role === "admin") {
         router.replace("/admin");
       } else if (user.role === "worker") {
@@ -42,7 +37,12 @@ export default function LoginScreen() {
         Alert.alert("Facility dashboard", "The facility experience is coming soon.");
       }
     } catch (e: any) {
-      setError(e.message ?? "Something went wrong. Try again.");
+      const msg: string = e.message ?? "Something went wrong. Try again.";
+      if (msg.toLowerCase().includes("not verified")) {
+        router.push({ pathname: "/verify-otp", params: { email: email.trim().toLowerCase() } });
+        return;
+      }
+      setError(msg);
     } finally {
       setLoading(false);
     }

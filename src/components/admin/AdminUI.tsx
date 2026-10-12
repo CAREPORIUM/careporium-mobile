@@ -4,6 +4,7 @@ import { Ionicons } from "@expo/vector-icons";
 import type { Href } from "expo-router";
 import { colors, radius, spacing, typography } from "@/constants/theme";
 import { goBack } from "@/utils/navigation";
+import { router } from "expo-router";
 
 // Shared building blocks for every admin screen.
 
@@ -20,8 +21,7 @@ export function AdminHeader() {
   return (
     <View style={styles.header}>
       <Brand />
-      <Pressable onPress={() => Alert.alert("Notifications", "No new notifications")} hitSlop={8} accessibilityLabel="Notifications">
-        <Ionicons name="notifications-outline" size={26} color={colors.text} />
+<Pressable onPress={() => router.push("/admin/notifications")} hitSlop={8} accessibilityLabel="Notifications">        <Ionicons name="notifications-outline" size={26} color={colors.text} />
       </Pressable>
     </View>
   );
