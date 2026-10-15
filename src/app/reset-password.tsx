@@ -6,7 +6,7 @@ import {
   Pressable,
   StyleSheet,
 } from "react-native";
-import { router } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import PrimaryButton from "@/components/ui/PrimaryButton";
 import { colors, spacing, typography } from "@/constants/theme";
@@ -15,10 +15,11 @@ import { goBack } from "@/utils/navigation";
 export default function ResetPasswordScreen() {
   const [code, setCode] = useState("");
   const inputRef = useRef<TextInput>(null);
-
+ 
   const handleCodeChange = (value: string) => {
     setCode(value.replace(/[^0-9]/g, "").slice(0, 6));
   };
+  const {email} = useLocalSearchParams<{ email?: string }>();
 
   return (
     <View style={styles.container}>
@@ -84,7 +85,17 @@ export default function ResetPasswordScreen() {
 
       <PrimaryButton
         title="Verify"
-        onPress={() => router.push("/create-password")}
+       onPress={() => {
+  if (code.length !== 6) return;
+
+  router.push({
+    pathname: "/create-password",
+    params: {
+      email: typeof email === "string" ? email : "",
+      otp: code,
+    },
+  });
+}}
         disabled={code.length !== 6}
         style={styles.verifyButton}
       />

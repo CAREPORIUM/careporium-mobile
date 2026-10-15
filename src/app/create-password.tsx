@@ -5,15 +5,24 @@ import {
   Pressable,
   StyleSheet,
   ScrollView,
+  Alert,
 } from "react-native";
-import { router } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import AppInput from "@/components/ui/AppInput";
 import PrimaryButton from "@/components/ui/PrimaryButton";
+import { resetPassword } from "@/services/auth.service";
 import { colors, spacing, typography } from "@/constants/theme";
 import { goBack } from "@/utils/navigation";
 
 export default function CreatePasswordScreen() {
+  const { email, otp } = useLocalSearchParams<{
+  email?: string;
+  otp?: string;
+}>();
+
+const [loading, setLoading] = useState(false);
+const [error, setError] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [hidePassword, setHidePassword] = useState(true);
@@ -33,6 +42,47 @@ export default function CreatePasswordScreen() {
     hasCase &&
     hasNumberOrSpecial &&
     passwordsMatch;
+
+    const handleResetPassword = async () => {
+  if (!email || !otp) {
+    setError(
+      "Your reset session is missing. Please start the password reset process again."
+    );
+    return;
+  }
+
+  if (!canReset) {
+    setError("Please meet all password requirements.");
+    return;
+  }
+
+  setError("");
+  setLoading(true);
+
+  try {
+    await resetPassword(email, otp, password);
+
+    Alert.alert(
+      "Password Reset Successful",
+      "Your password has been changed. Please log in with your new password.",
+      [
+        {
+          text: "Continue to Login",
+          onPress: () => router.replace("/login"),
+        },
+      ]
+    );
+  } catch (e: unknown) {
+    const message =
+      e instanceof Error
+        ? e.message
+        : "Unable to reset your password. Please try again.";
+
+    setError(message);
+  } finally {
+    setLoading(false);
+  }
+};
 
   const renderRule = (passed: boolean, label: string) => (
     <View style={styles.rule} key={label}>
@@ -173,12 +223,17 @@ export default function CreatePasswordScreen() {
         </Text>
       )}
 
+      {error ? (
+  <Text style={styles.errorText}>{error}</Text>
+) : null}
+
       <PrimaryButton
-        title="Reset Password"
-        onPress={() => router.replace("/login")}
-        disabled={!canReset}
-        style={styles.resetButton}
-      />
+  title="Reset Password"
+  onPress={handleResetPassword}
+  loading={loading}
+  disabled={!canReset || loading}
+  style={styles.resetButton}
+/>
     </ScrollView>
   );
 }

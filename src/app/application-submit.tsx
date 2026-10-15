@@ -1,10 +1,19 @@
-import { ScrollView, StyleSheet, Text, View, Pressable } from "react-native";
+import { useState } from "react";
+import {
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+  Pressable,
+  ActivityIndicator,
+} from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { router } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import PrimaryButton from "@/components/ui/PrimaryButton";
 import StepIndicator from "@/components/ui/StepIndicator";
 import { colors, radius, spacing, typography } from "@/constants/theme";
 import { goBack } from "@/utils/navigation";
+import { applyForShift } from "@/services/shift.service";
 
 const MOCK_SHIFT = {
   title: "Registered Nurse · Acute Care",
@@ -17,6 +26,35 @@ const MOCK_SHIFT = {
 const MOCK_WORKER = { name: "Amara Okafor · RN", licence: "Verified and active", availability: "Full 07:00–19:00 WAT shift" };
 
 export default function ApplicationSubmit() {
+  const { id } = useLocalSearchParams<{ id?: string }>();
+const [submitting, setSubmitting] = useState(false);
+const [error, setError] = useState<string | null>(null);
+
+async function handleSubmit() {
+  if (submitting) return;
+
+  if (!id) {
+    setError("The shift ID is missing. Return to the shifts screen and try again.");
+    return;
+  }
+
+  setSubmitting(true);
+  setError(null);
+
+  try {
+    await applyForShift(id);
+    router.replace("/application-submitted");
+  } catch (e) {
+    setError(
+      e instanceof Error
+        ? e.message
+        : "Unable to submit your application. Please try again."
+    );
+  } finally {
+    setSubmitting(false);
+  }
+}
+
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       <Text style={styles.eyebrow}>APPLICATION</Text>
@@ -27,12 +65,13 @@ export default function ApplicationSubmit() {
 
       <View style={styles.card}>
         <Text style={styles.cardHeading}>Application summary</Text>
-        <Text style={styles.jobTitle}>{MOCK_SHIFT.title}</Text>
-        <Text style={styles.facility}>{MOCK_SHIFT.facility}</Text>
-        <View style={styles.matchPill}><Text style={styles.matchText}>{MOCK_SHIFT.match}</Text></View>
-        <Row icon="calendar-outline" text={MOCK_SHIFT.dateTime} />
-        <Row icon="location-outline" text={MOCK_SHIFT.location} />
-        <Row icon="cash-outline" text={MOCK_SHIFT.rate} />
+<Text style={styles.jobTitle}>Selected healthcare shift</Text>
+<Text style={styles.facility}>
+  Shift reference: {id ?? "Missing shift ID"}
+</Text>
+<Text style={styles.message}>
+  Your application will be submitted for the selected shift.
+</Text>
       </View>
 
       <View style={styles.card}>
@@ -55,7 +94,29 @@ export default function ApplicationSubmit() {
       <Pressable style={styles.backButton} onPress={() => goBack("/application-review")}>
         <Text style={styles.backText}>Back to review</Text>
       </Pressable>
-      <PrimaryButton title="Submit application" onPress={() => router.replace("/application-submitted")} style={{ marginTop: spacing.sm }} />
+      {error && (
+  <View style={styles.notice}>
+    <Ionicons
+      name="alert-circle-outline"
+      size={20}
+      color={colors.primary}
+    />
+    <Text style={styles.noticeText}>{error}</Text>
+  </View>
+)}
+
+{!submitting ? (
+  <PrimaryButton
+    title="Submit application"
+    onPress={handleSubmit}
+    style={{ marginTop: spacing.sm }}
+  />
+) : (
+  <View style={styles.loadingRow}>
+    <ActivityIndicator color={colors.primary} />
+    <Text style={styles.value}>Submitting application...</Text>
+  </View>
+)}
     </ScrollView>
   );
 }
@@ -108,4 +169,11 @@ const styles = StyleSheet.create({
   noticeText: { flex: 1, ...typography.bodySmall, color: colors.primary },
   backButton: { height: 48, borderWidth: 1, borderColor: colors.primary, borderRadius: radius.md, alignItems: "center", justifyContent: "center" },
   backText: { color: colors.primary, ...typography.label, fontWeight: "600" },
+  loadingRow: {
+  flexDirection: "row",
+  alignItems: "center",
+  justifyContent: "center",
+  gap: spacing.sm,
+  marginTop: spacing.md,
+},
 });

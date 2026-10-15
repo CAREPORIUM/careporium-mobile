@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
-import { View, Text, StyleSheet, Pressable, ScrollView } from "react-native";
+import { View, Text, StyleSheet, Pressable, ScrollView, ActivityIndicator, } from "react-native";
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import AppInput from "@/components/ui/AppInput";
 import AppSelect from "@/components/ui/AppSelect";
 import PrimaryButton from "@/components/ui/PrimaryButton";
+import SecondaryButton from "@/components/ui/SecondaryButton";
 import { getShifts } from "@/services/shift.service";
 import { Shift } from "@/types/shift";
 import { colors, radius, spacing, typography } from "@/constants/theme";
@@ -16,9 +17,10 @@ const SPECIALTIES = ["Nursing", "Doctor", "Pharmacy", "Lab"];
 const naira = (n: number) => `₦${n.toLocaleString()}`;
 
 function tagStyle(tag?: string | null) {
-  if (tag === "URGENT") return { bg: "#FEF3C7", color: "#B45309" };
-  if (tag === "NEW") return { bg: "#DCFCE7", color: colors.success };
-  return { bg: "#DCFCE7", color: colors.success };
+  return {
+    bg: colors.primaryLight,
+    color: tag === "URGENT" ? colors.primary : colors.success,
+  };
 }
 
 export default function ShiftsScreen() {
@@ -27,10 +29,30 @@ export default function ShiftsScreen() {
   const [location, setLocation] = useState<string | null>(LOCATIONS[0]);
   const [date, setDate] = useState<string | null>(DATES[0]);
   const [specialty, setSpecialty] = useState<string | null>(SPECIALTIES[0]);
+  const [loading, setLoading] = useState(true);
+const [error, setError] = useState<string | null>(null);
+
+async function loadShifts() {
+  setLoading(true);
+  setError(null);
+
+  try {
+    const result = await getShifts();
+    setShifts(result);
+  } catch (e) {
+    setError(
+      e instanceof Error
+        ? e.message
+        : "Unable to load shifts. Please try again."
+    );
+  } finally {
+    setLoading(false);
+  }
+}
 
   useEffect(() => {
-    getShifts().then(setShifts);
-  }, []);
+  loadShifts();
+}, []);
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
@@ -58,37 +80,77 @@ export default function ShiftsScreen() {
           <Text style={styles.resultsPillText}>{shifts.length} RESULTS</Text>
         </View>
 
-        {shifts.map((shift) => {
-          const t = tagStyle(shift.tag);
-          return (
-            <View key={shift.id} style={styles.shiftCard}>
-              <Text style={styles.shiftTitle}>{shift.title}</Text>
-              <Text style={styles.shiftFacility}>{shift.facility} · Verified facility</Text>
+        {loading ? (
+  <View style={{ alignItems: "center", padding: spacing.lg }}>
+    <ActivityIndicator size="large" color={colors.primary} />
+    <Text style={styles.cardText}>Loading available shifts...</Text>
+  </View>
+) : error ? (
+  <View style={{ gap: spacing.md }}>
+    <Text style={styles.cardText}>{error}</Text>
+    <SecondaryButton title="Try again" onPress={loadShifts} />
+  </View>
+) : shifts.length === 0 ? (
+  <Text style={styles.cardText}>
+    No shifts are available right now. Please check again later.
+  </Text>
+) : (
+  shifts.map((shift) => {
+    const t = tagStyle(shift.tag);
 
-              {shift.tag ? (
-                <View style={[styles.tagPill, { backgroundColor: t.bg }]}>
-                  <Text style={[styles.tagPillText, { color: t.color }]}>{shift.tag}</Text>
-                </View>
-              ) : (
-                <View style={[styles.tagPill, { backgroundColor: "#DCFCE7" }]}>
-                  <Text style={[styles.tagPillText, { color: colors.success }]}>{shift.matchPercent}% MATCH</Text>
-                </View>
-              )}
+    return (
+      <View key={shift.id} style={styles.shiftCard}>
+        <Text style={styles.shiftTitle}>{shift.title}</Text>
 
-              <Text style={styles.shiftMeta}>{shift.date} · {shift.time} · {shift.location} · {shift.distanceKm} km</Text>
-              <Text style={styles.shiftRate}>{naira(shift.rate)}/hr · {naira(shift.total)} total</Text>
+        {shift.facility ? (
+          <Text style={styles.shiftFacility}>
+            {shift.facility}
+            {shift.verifiedFacility ? " · Verified facility" : ""}
+          </Text>
+        ) : null}
 
-              <PrimaryButton
-                title="View shift"
-                onPress={() => router.push({ pathname: "/shift-details", params: { id: shift.id } })}
-                style={{ marginTop: spacing.md }}
-              />
-            </View>
-          );
-        })}
+        {shift.tag ? (
+          <View style={[styles.tagPill, { backgroundColor: t.bg }]}>
+            <Text style={[styles.tagPillText, { color: t.color }]}>
+              {shift.tag}
+            </Text>
+          </View>
+        ) : null}
 
-        <Text style={styles.footnote}>Showing {shifts.length} of 24 sample shifts · All times are WAT</Text>
+        {(shift.date || shift.time || shift.location) ? (
+          <Text style={styles.shiftMeta}>
+            {[shift.date, shift.time, shift.location]
+              .filter(Boolean)
+              .join(" · ")}
+            {shift.distanceKm > 0 ? ` · ${shift.distanceKm} km` : ""}
+          </Text>
+        ) : null}
+
+        {shift.rate > 0 ? (
+          <Text style={styles.shiftRate}>
+            {naira(shift.rate)}/hr
+            {shift.total > 0 ? ` · ${naira(shift.total)} total` : ""}
+          </Text>
+        ) : null}
+
+        <PrimaryButton
+          title="View shift"
+          onPress={() =>
+            router.push({
+              pathname: "/shift-details",
+              params: { id: shift.id },
+            })
+          }
+          style={{ marginTop: spacing.md }}
+        />
       </View>
+    );
+  })
+)}
+
+        <Text style={styles.footnote}>
+  {loading ? "Retrieving shifts..." : `${shifts.length} shifts returned by the server`}
+</Text>
 
       <View style={styles.card}>
         <Text style={styles.label}>Sort shifts</Text>
