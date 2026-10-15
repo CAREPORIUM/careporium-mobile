@@ -1,77 +1,92 @@
+
+import { api } from "@/services/api";
 import { Shift } from "@/types/shift";
 
+type RawShift = Record<string, any>;
 
-
-const MOCK_SHIFTS: Shift[] = [
-  {
-    id: "1",
-    title: "Registered Nurse · Acute Care",
-    facility: "Mainland Care Hospital",
-    verifiedFacility: true,
-    tag: "URGENT",
-    matchPercent: 94,
-    date: "Tue, 6 Oct",
-    time: "07:00–19:00 WAT",
-    location: "Ikeja, Lagos",
-    distanceKm: 4.2,
-    rate: 3000,
-    total: 36000,
-    description: "Support an experienced acute care team through a 12-hour day shift. Clear handover, clinical support, and reliable pay after verified completion.",
-    duties: [
-      "Deliver safe patient care and document handovers",
-      "Collaborate with the ward team and follow local protocols",
-      "Confirm attendance at the start and end of the shift",
-    ],
-    closesAt: "5 Oct · 18:00",
-  },
-  {
-    id: "2",
-    title: "Community Nurse",
-    facility: "Yaba Community Clinic",
-    verifiedFacility: true,
-    tag: null,
-    matchPercent: 94,
-    date: "Fri, 9 Oct",
-    time: "08:00–16:00 WAT",
-    location: "Yaba, Lagos",
-    distanceKm: 7.5,
-    rate: 3500,
-    total: 28000,
-    description: "Join a community clinic team providing outpatient nursing support for a full day shift.",
-    duties: [
-      "Provide outpatient nursing support",
-      "Coordinate with clinic staff on patient flow",
-      "Confirm attendance at the start and end of the shift",
-    ],
-    closesAt: "8 Oct · 18:00",
-  },
-  {
-    id: "3",
-    title: "Registered Nurse · Night Shift",
-    facility: "Ikeja Medical Centre",
-    verifiedFacility: true,
-    tag: "NEW",
-    matchPercent: 88,
-    date: "Sat, 10 Oct",
-    time: "19:00–07:00 WAT",
-    location: "Ikeja, Lagos",
-    distanceKm: 5.1,
-    rate: 4500,
-    total: 54000,
-    description: "Overnight coverage for a busy medical centre. Night differential pay included.",
-    duties: [
-      "Provide overnight patient monitoring",
-      "Escalate urgent cases per protocol",
-      "Confirm attendance at the start and end of the shift",
-    ],
-    closesAt: "9 Oct · 18:00",
-  },
-];
-
-export async function getShifts(): Promise<Shift[]> {
-  return MOCK_SHIFTS;
+function getShiftObject(response: any): RawShift {
+  return response?.data?.shift
+    ?? response?.shift
+    ?? response?.data
+    ?? response;
 }
 
-export async function getShiftById(id: string): Promise<Shift | undefined> {
-  return MOCK_SHIFTS.find((s) => s.id === id);
+function getShiftList(response: any): RawShift[] {
+  const result =
+    response?.data?.shifts
+    ?? response?.shifts
+    ?? response?.data
+    ?? response;
+
+  if (Array.isArray(result)) return result;
+
+  if (Array.isArray(result?.items)) return result.items;
+
+  return [];
+}
+
+function toShift(raw: RawShift): Shift {
+  const start = raw.startTime ?? raw.startDateTime ?? raw.startDate;
+  const end = raw.endTime ?? raw.endDateTime ?? raw.endDate;
+
+  const dateValue = raw.date ?? start;
+  const timeValue =
+    raw.time ??
+    (start && end ? `${start} – ${end}` : start ?? "");
+
+  const facilityValue =
+    typeof raw.facility === "string"
+      ? raw.facility
+      : raw.facility?.name ?? raw.facilityName ?? "";
+
+  const locationValue =
+    typeof raw.location === "string"
+      ? raw.location
+      : raw.location?.address ?? raw.location?.name ?? raw.address ?? "";
+
+  const rate = Number(raw.rate ?? raw.hourlyRate ?? raw.payPerHour ?? 0);
+  const total = Number(raw.total ?? raw.totalPay ?? raw.amount ?? 0);
+
+  return {
+    id: String(raw._id ?? raw.id ?? raw.shiftId ?? ""),
+    title: raw.title ?? raw.role ?? raw.jobTitle ?? "Healthcare shift",
+    facility: facilityValue,
+    verifiedFacility: Boolean(raw.verifiedFacility ?? raw.facility?.verified ?? false),
+    tag: raw.tag === "URGENT" || raw.tag === "NEW" ? raw.tag : null,
+    date: dateValue ? String(dateValue) : "",
+    time: timeValue ? String(timeValue) : "",
+    location: locationValue,
+    distanceKm: Number(raw.distanceKm ?? raw.distance ?? 0),
+    rate: Number.isFinite(rate) ? rate : 0,
+    total: Number.isFinite(total) ? total : 0,
+    description: raw.description ?? raw.details ?? "",
+    duties: Array.isArray(raw.duties) ? raw.duties : [],
+    closesAt: raw.closesAt ?? raw.applicationDeadline ?? "",
+  };
+}
+
+export async function getShifts(): Promise<Shift[]> {
+  const response = await api("/api/shifts/v1/get-shifts");
+  return getShiftList(response).map(toShift);
+}
+
+export async function getShiftById(
+  id: string
+): Promise<Shift | undefined> {
+  const response = await api(
+    `/api/shifts/v1/get-single-shift/${encodeURIComponent(id)}`
+  );
+
+  const raw = getShiftObject(response);
+
+  if (!raw || typeof raw !== "object") return undefined;
+
+  return toShift(raw);
+}
+
+export async function applyForShift(shiftId: string): Promise<void> {
+  await api(
+    `/api/applications/v1/apply/${encodeURIComponent(shiftId)}`,
+    { method: "POST" }
+  );
 }
