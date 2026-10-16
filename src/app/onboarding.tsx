@@ -4,6 +4,8 @@ import { router } from "expo-router";
 import PrimaryButton from "@/components/ui/PrimaryButton";
 import SecondaryButton from "@/components/ui/SecondaryButton";
 import { colors, spacing, typography } from "@/constants/theme";
+import { Redirect } from "expo-router";
+import { useAuth } from "@/context/AuthContext";
 
 const SLIDES = [
   { image: require("@/assets/onboarding/slide1.jpg"), title: "Find the right Opportunities.", text: "Discover flexible shifts, explore trusted facilities, and take control of your careers." },
@@ -19,6 +21,12 @@ export default function OnboardingScreen() {
   const next = () => (isLast ? router.replace("/login") : setIndex(index + 1));
   const skip = () => router.replace("/login");
   const back = () => setIndex(Math.max(0, index - 1));
+  
+  const { user, loading } = useAuth();
+
+if (loading) return null; // wait while the saved session loads
+if (user?.role === "worker") return <Redirect href="/(tabs)" />;
+if (user?.role === "admin") return <Redirect href="/admin" />;
 
   return (
     <View style={styles.container}>

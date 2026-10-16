@@ -20,13 +20,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // On app start, restore the saved session (if any)
   useEffect(() => {
-    (async () => {
+  (async () => {
+    try {
       const token = await getToken();
       const saved = await getSavedUser<AuthUser>();
       if (token && saved) setUser(saved);
-      setLoading(false);
-    })();
-  }, []);
+    } catch (e) {
+      console.log("could not restore session", e);
+    } finally {
+      setLoading(false); // always stop loading, even if something failed
+    }
+  })();
+}, []);
 
   return <AuthContext.Provider value={{ user, loading, setUser }}>{children}</AuthContext.Provider>;
 }

@@ -6,7 +6,7 @@ import { colors, radius, spacing, typography } from "@/constants/theme";
 type Props = {
   title: string;
   message: string;
-  time: string;
+  time?: string;
   unread?: boolean;
   actionLabel?: string;
   onAction?: () => void;
@@ -21,10 +21,8 @@ export default function NotificationCard({ title, message, time, unread = false,
       <View style={styles.body}>
         <Text style={styles.title}>{title}</Text>
         <Text style={styles.message}>{message}</Text>
-        <Text style={styles.time}>{time}</Text>
-        {actionLabel && onAction ? (
-          <SecondaryButton title={actionLabel} onPress={onAction} style={styles.action} />
-        ) : null}
+        {time ? <Text style={styles.time}>{time}</Text> : null}
+        {actionLabel && onAction ? <SecondaryButton title={actionLabel} onPress={onAction} style={styles.action} /> : null}
       </View>
 
       {unread && <View style={styles.dot} />}

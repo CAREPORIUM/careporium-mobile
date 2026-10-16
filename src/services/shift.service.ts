@@ -1,77 +1,85 @@
+import { api } from "@/services/api";
 import { Shift } from "@/types/shift";
 
+// REAL. Worker side of the shifts API:
+//   GET /api/shifts/v1/get-shifts?status=open
+//   GET /api/shifts/v1/get-shift/{shiftId}
 
+const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
-const MOCK_SHIFTS: Shift[] = [
-  {
-    id: "1",
-    title: "Registered Nurse · Acute Care",
-    facility: "Mainland Care Hospital",
-    verifiedFacility: true,
-    tag: "URGENT",
-    matchPercent: 94,
-    date: "Tue, 6 Oct",
-    time: "07:00–19:00 WAT",
-    location: "Ikeja, Lagos",
-    distanceKm: 4.2,
-    rate: 3000,
-    total: 36000,
-    description: "Support an experienced acute care team through a 12-hour day shift. Clear handover, clinical support, and reliable pay after verified completion.",
-    duties: [
-      "Deliver safe patient care and document handovers",
-      "Collaborate with the ward team and follow local protocols",
-      "Confirm attendance at the start and end of the shift",
-    ],
-    closesAt: "5 Oct · 18:00",
-  },
-  {
-    id: "2",
-    title: "Community Nurse",
-    facility: "Yaba Community Clinic",
-    verifiedFacility: true,
-    tag: null,
-    matchPercent: 94,
-    date: "Fri, 9 Oct",
-    time: "08:00–16:00 WAT",
-    location: "Yaba, Lagos",
-    distanceKm: 7.5,
-    rate: 3500,
-    total: 28000,
-    description: "Join a community clinic team providing outpatient nursing support for a full day shift.",
-    duties: [
-      "Provide outpatient nursing support",
-      "Coordinate with clinic staff on patient flow",
-      "Confirm attendance at the start and end of the shift",
-    ],
-    closesAt: "8 Oct · 18:00",
-  },
-  {
-    id: "3",
-    title: "Registered Nurse · Night Shift",
-    facility: "Ikeja Medical Centre",
-    verifiedFacility: true,
-    tag: "NEW",
-    matchPercent: 88,
-    date: "Sat, 10 Oct",
-    time: "19:00–07:00 WAT",
-    location: "Ikeja, Lagos",
-    distanceKm: 5.1,
-    rate: 4500,
-    total: 54000,
-    description: "Overnight coverage for a busy medical centre. Night differential pay included.",
-    duties: [
-      "Provide overnight patient monitoring",
-      "Escalate urgent cases per protocol",
-      "Confirm attendance at the start and end of the shift",
-    ],
-    closesAt: "9 Oct · 18:00",
-  },
-];
+function dateLabel(key: string): string {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(key ?? "");
+  if (!m) return key || "Date to be confirmed";
+  const y = Number(m[1]);
+  const mo = Number(m[2]);
+  const d = Number(m[3]);
+  const date = new Date(y, mo - 1, d);
+  if (date.getFullYear() !== y || date.getMonth() !== mo - 1 || date.getDate() !== d) return key;
+  return `${WEEKDAYS[date.getDay()]}, ${d} ${MONTHS[mo - 1]}`;
+}
+
+function hoursBetween(start: string, end: string): number {
+  const a = /^(\d{1,2}):(\d{2})$/.exec(start ?? "");
+  const b = /^(\d{1,2}):(\d{2})$/.exec(end ?? "");
+  if (!a || !b) return 0;
+  const s = Number(a[1]) * 60 + Number(a[2]);
+  const e = Number(b[1]) * 60 + Number(b[2]);
+  const mins = e > s ? e - s : e + 24 * 60 - s;
+  return Math.round((mins / 60) * 100) / 100;
+}
+
+export function toShift(r: any): Shift {
+  const f = r.facility;
+  const facility = typeof f === "object" && f ? f.facilityName ?? f.name ?? f.fullName ?? "Healthcare facility" : "Healthcare facility";
+  const start = r.startTime ?? "";
+  const end = r.endTime ?? "";
+  const total = Number(r.payRate) || 0;
+  const hours = hoursBetween(start, end);
+  const responsibilities = String(r.responsibilities ?? "");
+  const lines = responsibilities.split(/\r?\n|;/).map((x) => x.trim()).filter(Boolean);
+  return {
+    id: String(r._id),
+    title: [r.profession, r.specialty].filter(Boolean).join(" · ") || "Shift",
+    facility,
+    location: r.location ?? "",
+    date: dateLabel(String(r.shiftDate ?? "")),
+    time: start && end ? `${start}–${end} WAT` : "",
+    shiftType: r.shiftType ?? "",
+    total,
+    hours,
+    rate: hours > 0 ? Math.round(total / hours) : total,
+    tag: r.isUrgent ? "URGENT" : null,
+    description: responsibilities,
+    duties: lines.length > 1 ? lines : [],
+    requirements: r.reqCredentials ?? "",
+    arrival: r.arrivalInstructions ?? "",
+    experience: r.minimumExperience ?? "",
+    status: r.status ?? "",
+    needed: Number(r.professionalsNeeded) || 1,
+    filled: Array.isArray(r.assignedWorkers) ? r.assignedWorkers.length : 0,
+    sortKey: `${r.shiftDate ?? ""} ${start}`,
+    createdAt: r.createdAt ?? "",
+  };
+}
+
+const cache = new Map<string, Shift>();
 
 export async function getShifts(): Promise<Shift[]> {
-  return MOCK_SHIFTS;
+  const body: any = await api("/api/shifts/v1/get-shifts?status=open", { method: "GET" });
+  const rows: any[] = Array.isArray(body) ? body : Array.isArray(body?.data) ? body.data : [];
+  const list = rows.filter((r) => r && r._id).map(toShift);
+  list.forEach((s) => cache.set(s.id, s));
+  return list;
 }
 
 export async function getShiftById(id: string): Promise<Shift | undefined> {
-  return MOCK_SHIFTS.find((s) => s.id === id);
+  const hit = cache.get(id);
+  if (hit) return hit;
+  const body: any = await api(`/api/shifts/v1/get-shift/${id}`, { method: "GET" });
+  const d = body?.data ?? body;
+  if (!d?._id) return undefined;
+  const s = toShift(d);
+  cache.set(id, s);
+  return s;
 }

@@ -27,6 +27,9 @@ export const colors = {
 
   successLight: "#ECFDF3",
   errorLight: "#FEE2E2",
+
+  successLight: "#ECFDF3",
+  errorLight: "#FEE2E2",
 } as const;
 
 export const spacing = {

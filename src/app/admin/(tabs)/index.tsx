@@ -1,69 +1,75 @@
+import { useCallback, useState } from "react";
 import { View, Text, StyleSheet } from "react-native";
-import { router } from "expo-router";
-import SecondaryButton from "@/components/ui/SecondaryButton";
-import { AdminScreen, Card, CardTitle, ScreenTitle } from "@/components/admin/AdminUI";
-import { getAdminStats } from "@/services/admin.service";
-import { colors, radius, spacing, typography } from "@/constants/theme";
-
-function StatCard({ title, value }: { title: string; value: string }) {
-  return (
-    <Card>
-      <CardTitle>{title}</CardTitle>
-      <Text style={styles.statValue}>{value}</Text>
-    </Card>
-  );
-}
+import { router, useFocusEffect } from "expo-router";
+import PrimaryButton from "@/components/ui/PrimaryButton";
+import { AdminScreen, Card, CardTitle, EmptyText, InfoLine, ScreenTitle } from "@/components/admin/AdminUI";
+import { getPending, getStats } from "@/services/admin.service";
+import { AdminPerson, StatLine } from "@/types/admin";
+import { colors, spacing, typography } from "@/constants/theme";
 
 export default function AdminHomeScreen() {
-  const stats = getAdminStats();
-  const maxCount = Math.max(...stats.completedLast7Days.map((d) => d.count));
+  const [stats, setStats] = useState<StatLine[]>([]);
+  const [pending, setPending] = useState<AdminPerson[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useFocusEffect(
+    useCallback(() => {
+      let alive = true;
+      (async () => {
+        setError("");
+        const [s, p] = await Promise.allSettled([getStats(), getPending()]);
+        if (!alive) return;
+        if (s.status === "fulfilled") setStats(s.value);
+        if (p.status === "fulfilled") setPending(p.value);
+        if (s.status === "rejected" && p.status === "rejected") setError((s.reason as any)?.message ?? "Couldn't load the dashboard.");
+        setLoading(false);
+      })();
+      return () => {
+        alive = false;
+      };
+    }, [])
+  );
+
+  const workers = pending.filter((p) => p.kind === "worker").length;
+  const facilities = pending.filter((p) => p.kind === "facility").length;
+  const withDocs = pending.filter((p) => p.docs.some((d) => d.url)).length;
 
   return (
     <AdminScreen>
-      <ScreenTitle title="Marketplace overview" subtitle="Today · 2 October 2026 · Illustrative dashboard data" />
+      <ScreenTitle title="Marketplace overview" subtitle="Live numbers from the platform." />
 
-      <StatCard title="Healthcare workers" value={`${stats.workers.total.toLocaleString()} total · ${stats.workers.verified.toLocaleString()} verified`} />
-      <StatCard title="Facilities" value={`${stats.facilities.total} total · ${stats.facilities.verified} verified`} />
-      <StatCard title="Pending verifications" value={`${stats.pendingVerifications} submissions`} />
-      <StatCard title="Active shifts" value={`${stats.activeShifts} shifts`} />
-      <StatCard title="Completed shifts" value={`${stats.completedShifts.toLocaleString()} shifts`} />
-      <StatCard title="Open disputes" value={`${stats.openDisputes} cases`} />
+      {loading ? <EmptyText>Loading…</EmptyText> : null}
+      {error ? <Text style={styles.error}>{error}</Text> : null}
 
       <Card>
-        <CardTitle>Payment activity</CardTitle>
-        <Text style={styles.statValue}>{stats.payments.released} released this week</Text>
-        <Text style={styles.small}>{stats.payments.funded} funded · awaiting completion</Text>
-        <Text style={styles.small}>{stats.payments.failures} payment failures need review</Text>
-        <SecondaryButton title="View activity" onPress={() => router.push("/admin/activity")} style={{ marginTop: spacing.md }} />
+        <CardTitle>Waiting for verification</CardTitle>
+        <Text style={styles.big}>{pending.length}</Text>
+        <InfoLine>
+          {workers} {workers === 1 ? "worker" : "workers"} · {facilities} {facilities === 1 ? "facility" : "facilities"} · {withDocs} with documents to review
+        </InfoLine>
+        <PrimaryButton title="Open verification queue" onPress={() => router.push("/admin/verify")} style={{ marginTop: spacing.md }} />
       </Card>
 
-      <Card>
-        <CardTitle>Completed shifts · last 7 days</CardTitle>
-        {stats.completedLast7Days.map((d) => (
-          <View key={d.day} style={styles.barRow}>
-            <Text style={styles.barDay}>{d.day}</Text>
-            <View style={styles.barTrack}>
-              <View style={[styles.barFill, { width: `${(d.count / maxCount) * 100}%` }]} />
+      {stats.length > 0 ? (
+        <Card>
+          <CardTitle>Platform statistics</CardTitle>
+          {stats.map((s) => (
+            <View key={s.label} style={styles.row}>
+              <Text style={styles.label}>{s.label}</Text>
+              <Text style={styles.value}>{s.value}</Text>
             </View>
-            <Text style={styles.barCount}>{d.count}</Text>
-          </View>
-        ))}
-      </Card>
-
-      <Text style={styles.priority}>
-        Priority actions: {stats.pendingVerifications} verifications to review · {stats.openDisputes} open disputes · {stats.payments.failures} payment failures
-      </Text>
+          ))}
+        </Card>
+      ) : null}
     </AdminScreen>
   );
 }
 
 const styles = StyleSheet.create({
-  statValue: { ...typography.label, fontWeight: "600", color: colors.text, marginTop: spacing.xs },
-  small: { ...typography.bodySmall, color: colors.textSecondary, marginTop: spacing.sm },
-  barRow: { flexDirection: "row", alignItems: "center", marginTop: spacing.md, gap: spacing.md },
-  barDay: { ...typography.bodySmall, color: colors.text, width: 36 },
-  barTrack: { flex: 1, height: 14, borderRadius: radius.round, backgroundColor: colors.primaryLight, overflow: "hidden" },
-  barFill: { height: 14, borderRadius: radius.round, backgroundColor: colors.primary },
-  barCount: { ...typography.bodySmall, color: colors.text, width: 32, textAlign: "right" },
-  priority: { ...typography.bodySmall, color: colors.primary, marginTop: spacing.sm },
+  big: { ...typography.h1, color: colors.text, marginTop: spacing.xs },
+  row: { flexDirection: "row", justifyContent: "space-between", marginTop: spacing.sm },
+  label: { ...typography.bodySmall, color: colors.textSecondary, flex: 1, paddingRight: spacing.md },
+  value: { ...typography.bodySmall, color: colors.text, fontWeight: "700" },
+  error: { ...typography.bodySmall, color: colors.error, marginBottom: spacing.md },
 });

@@ -1,74 +1,115 @@
-import { ScrollView, StyleSheet, Text, View, Pressable, Alert } from "react-native";
+import { ScrollView, StyleSheet, Text, View, Pressable, Alert, Linking } from "react-native";
+import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import PrimaryButton from "@/components/ui/PrimaryButton";
+import { useWorkerData } from "@/hooks/useWorkerData";
+import { getUpcoming, startsLabel } from "@/services/worker-data.service";
 import { colors, radius, spacing, typography } from "@/constants/theme";
 
 export default function UpcomingScreen() {
+  const { loading, loaded, error } = useWorkerData();
+  const list = getUpcoming();
+  const first = list[0];
+  const shift = first?.shift;
+
+  const openMap = () => {
+    if (!shift?.location) return Alert.alert("Directions", "The facility hasn't added a location yet.");
+    Linking.openURL(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(shift.location)}`).catch(() =>
+      Alert.alert("Directions", "Couldn't open maps on this device.")
+    );
+  };
+
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       <Text style={styles.eyebrow}>UPCOMING</Text>
       <Text style={styles.title}>Your next confirmed shift.</Text>
       <Text style={styles.subtitle}>Everything you need to prepare and arrive with confidence.</Text>
 
-      <View style={styles.shiftCard}>
-        <View style={styles.pills}>
-          <View style={styles.confirmedPill}>
-            <Ionicons name="checkmark" size={14} color={colors.success} />
-            <Text style={styles.confirmedText}>CONFIRMED</Text>
+      {error ? <Text style={[styles.subtitle, { color: colors.error }]}>{error}</Text> : null}
+      {loading && !loaded ? <Text style={styles.subtitle}>Loading your shifts…</Text> : null}
+
+      {!shift && loaded ? (
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>No confirmed shifts yet</Text>
+          <Text style={styles.noteText}>When a facility accepts your application, the shift shows up here with everything you need to clock in.</Text>
+          <PrimaryButton title="Find shifts" onPress={() => router.push("/(tabs)/shifts")} style={{ marginTop: spacing.lg }} />
+        </View>
+      ) : null}
+
+      {shift ? (
+        <>
+          <View style={styles.shiftCard}>
+            <View style={styles.pills}>
+              <View style={styles.confirmedPill}>
+                <Ionicons name="checkmark" size={14} color={colors.success} />
+                <Text style={styles.confirmedText}>CONFIRMED</Text>
+              </View>
+              {startsLabel(shift.sortKey) ? (
+                <View style={styles.startPill}>
+                  <Text style={styles.startText}>{startsLabel(shift.sortKey)}</Text>
+                </View>
+              ) : null}
+            </View>
+
+            <Text style={styles.shiftTitle}>{shift.title}</Text>
+            <Text style={styles.facility}>{shift.facility}</Text>
+
+            <View style={styles.infoRow}>
+              <Ionicons name="calendar-outline" size={18} color={colors.textSecondary} />
+              <Text style={styles.infoText}>
+                {shift.date} · {shift.time}
+              </Text>
+            </View>
+            <View style={styles.infoRow}>
+              <Ionicons name="location-outline" size={18} color={colors.textSecondary} />
+              <Text style={styles.infoText}>{shift.location || "Location to be confirmed"}</Text>
+            </View>
+
+            <PrimaryButton
+              title="View shift and clock in"
+              onPress={() => router.push({ pathname: "/upcoming-shift", params: { id: shift.id } })}
+              style={{ marginTop: spacing.lg }}
+            />
           </View>
-          <View style={styles.startPill}>
-            <Text style={styles.startText}>STARTS IN 10 DAYS</Text>
+
+          <View style={styles.card}>
+            <Text style={styles.cardTitle}>Before your shift</Text>
+            <Checklist checked text="Facility confirmed your booking" />
+            <Checklist text="Review arrival instructions" />
+            <Checklist text="Scan the facility's QR when you arrive to clock in" />
           </View>
-        </View>
 
-        <Text style={styles.shiftTitle}>Community Nurse · Yaba Community Clinic</Text>
-        <Text style={styles.facility}>Yaba Community Clinic · Verified facility</Text>
+          <View style={styles.card}>
+            <Text style={styles.cardTitle}>Arrival information</Text>
+            <Info label="Location" value={shift.location || "To be confirmed"} />
+            <Info label="Shift starts" value={shift.time.split("–")[0] || "—"} />
+            {shift.arrival ? (
+              <View style={styles.note}>
+                <Text style={styles.noteText}>{shift.arrival}</Text>
+              </View>
+            ) : null}
 
-        <View style={styles.infoRow}>
-          <Ionicons name="calendar-outline" size={18} color={colors.textSecondary} />
-          <Text style={styles.infoText}>Fri, 9 October 2026 · 08:00–16:00 WAT</Text>
-        </View>
-        <View style={styles.infoRow}>
-          <Ionicons name="location-outline" size={18} color={colors.textSecondary} />
-          <Text style={styles.infoText}>Yaba, Lagos · Arrival at 07:45 WAT</Text>
-        </View>
+            <Pressable style={styles.outlineButton} onPress={openMap}>
+              <Ionicons name="navigate-outline" size={18} color={colors.primary} />
+              <Text style={styles.outlineText}>View directions</Text>
+            </Pressable>
+          </View>
 
-        <PrimaryButton
-          title="View shift instructions"
-          onPress={() => Alert.alert("Shift instructions", "Shift instructions will be available here.")}
-          style={{ marginTop: spacing.lg }}
-        />
-      </View>
-
-      <View style={styles.card}>
-        <Text style={styles.cardTitle}>Before your shift</Text>
-        <Checklist checked text="Facility confirmed your booking" />
-        <Checklist checked text="Credentials verified and shared securely" />
-        <Checklist text="Review arrival and uniform instructions" />
-        <Checklist text="Check in at the facility when you arrive" />
-      </View>
-
-      <View style={styles.card}>
-        <Text style={styles.cardTitle}>Arrival information</Text>
-        <Info label="Location" value="Yaba, Lagos" />
-        <Info label="Check-in" value="07:45 · Reception" />
-        <Info label="Contact" value="Shift coordinator" />
-
-        <View style={styles.note}>
-          <Text style={styles.noteText}>
-            A facility coordinator will meet you at reception. Please arrive early and have your professional ID
-            available.
-          </Text>
-        </View>
-
-        <Pressable
-          style={styles.outlineButton}
-          onPress={() => Alert.alert("Directions", "Directions will open here when connected to a map service.")}
-        >
-          <Ionicons name="navigate-outline" size={18} color={colors.primary} />
-          <Text style={styles.outlineText}>View directions</Text>
-        </Pressable>
-      </View>
+          {list.length > 1 ? (
+            <View style={styles.card}>
+              <Text style={styles.cardTitle}>Also coming up</Text>
+              {list.slice(1).map((a) => (
+                <Pressable key={a.id} onPress={() => router.push({ pathname: "/upcoming-shift", params: { id: a.shiftId } })} style={styles.info}>
+                  <Text style={styles.infoValue}>{a.title}</Text>
+                  <Text style={styles.infoLabel}>
+                    {a.date} · {a.facility}
+                  </Text>
+                </Pressable>
+              ))}
+            </View>
+          ) : null}
+        </>
+      ) : null}
     </ScrollView>
   );
 }
@@ -101,7 +142,7 @@ const styles = StyleSheet.create({
   subtitle: { ...typography.bodySmall, color: colors.textSecondary, marginTop: spacing.xs },
   shiftCard: { backgroundColor: colors.white, borderWidth: 1, borderColor: colors.borderLight, borderRadius: radius.lg, marginTop: spacing.lg, padding: spacing.lg },
   pills: { flexDirection: "row", alignItems: "center", gap: spacing.sm },
-  confirmedPill: { flexDirection: "row", alignItems: "center", backgroundColor: "#ECFDF3", borderRadius: radius.round, paddingHorizontal: spacing.sm, paddingVertical: 4, gap: 4 },
+  confirmedPill: { flexDirection: "row", alignItems: "center", backgroundColor: colors.card, borderRadius: radius.round, paddingHorizontal: spacing.sm, paddingVertical: 4, gap: 4 },
   confirmedText: { color: colors.success, ...typography.bodySmall, fontWeight: "800" },
   startPill: { backgroundColor: colors.primaryLight, borderRadius: radius.round, paddingHorizontal: spacing.sm, paddingVertical: 4 },
   startText: { color: colors.primary, ...typography.bodySmall, fontWeight: "800" },

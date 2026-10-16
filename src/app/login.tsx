@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { View, Text, StyleSheet, Pressable, ScrollView, Alert } from "react-native";
+import { View, Text, StyleSheet, Pressable, ScrollView } from "react-native";
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import AppInput from "@/components/ui/AppInput";
@@ -34,7 +34,7 @@ export default function LoginScreen() {
       } else if (user.role === "worker") {
         router.replace("/(tabs)");
       } else {
-        Alert.alert("Facility dashboard", "The facility experience is coming soon.");
+        router.replace("/facility");
       }
     } catch (e: any) {
       const msg: string = e.message ?? "Something went wrong. Try again.";

@@ -1,22 +1,41 @@
+import { useEffect, useState } from "react";
 import { ScrollView, StyleSheet, Text, View, Pressable } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { router } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import PrimaryButton from "@/components/ui/PrimaryButton";
 import StepIndicator from "@/components/ui/StepIndicator";
+import { applyToShift } from "@/services/application.service";
+import { getShiftById } from "@/services/shift.service";
+import { Shift } from "@/types/shift";
 import { colors, radius, spacing, typography } from "@/constants/theme";
 import { goBack } from "@/utils/navigation";
 
-const MOCK_SHIFT = {
-  title: "Registered Nurse · Acute Care",
-  facility: "Mainland Care Hospital · Verified facility",
-  match: "94% MATCH",
-  dateTime: "Tue, 6 Oct · 07:00–19:00 WAT",
-  location: "Ikeja · 7.7 km away",
-  rate: "₦3,000/hr · ₦36,000 estimated",
-};
-const MOCK_WORKER = { name: "Amara Okafor · RN", licence: "Verified and active", availability: "Full 07:00–19:00 WAT shift" };
+const naira = (n: number) => `₦${n.toLocaleString()}`;
 
 export default function ApplicationSubmit() {
+  const { id } = useLocalSearchParams<{ id?: string }>();
+  const [shift, setShift] = useState<Shift | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    if (id) getShiftById(id).then((s) => setShift(s ?? null)).catch(() => setShift(null));
+  }, [id]);
+
+  const submit = async () => {
+    if (!id || busy) return;
+    setBusy(true);
+    setError("");
+    try {
+      await applyToShift(id);
+      router.replace("/application-submitted");
+    } catch (e: any) {
+      setError(e.message ?? "Couldn't send your application. Try again.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       <Text style={styles.eyebrow}>APPLICATION</Text>
@@ -25,37 +44,28 @@ export default function ApplicationSubmit() {
 
       <StepIndicator current={2} />
 
-      <View style={styles.card}>
-        <Text style={styles.cardHeading}>Application summary</Text>
-        <Text style={styles.jobTitle}>{MOCK_SHIFT.title}</Text>
-        <Text style={styles.facility}>{MOCK_SHIFT.facility}</Text>
-        <View style={styles.matchPill}><Text style={styles.matchText}>{MOCK_SHIFT.match}</Text></View>
-        <Row icon="calendar-outline" text={MOCK_SHIFT.dateTime} />
-        <Row icon="location-outline" text={MOCK_SHIFT.location} />
-        <Row icon="cash-outline" text={MOCK_SHIFT.rate} />
-      </View>
-
-      <View style={styles.card}>
-        <Text style={styles.cardHeading}>Your details</Text>
-        <Detail label="Professional" value={MOCK_WORKER.name} />
-        <Detail label="Professional licence" value={MOCK_WORKER.licence} verified />
-        <Detail label="Availability" value={MOCK_WORKER.availability} />
-      </View>
-
-      <View style={styles.card}>
-        <Text style={styles.cardHeading}>Message to the facility</Text>
-        <Text style={styles.message}>"I'm available for the full shift and have acute care experience."</Text>
-      </View>
+      {shift ? (
+        <View style={styles.card}>
+          <Text style={styles.cardHeading}>Application summary</Text>
+          <Text style={styles.jobTitle}>{shift.title}</Text>
+          <Text style={styles.facility}>{shift.facility}</Text>
+          <Row icon="calendar-outline" text={`${shift.date} · ${shift.time}`} />
+          {shift.location ? <Row icon="location-outline" text={shift.location} /> : null}
+          <Row icon="cash-outline" text={`${naira(shift.total)} for this shift`} />
+        </View>
+      ) : null}
 
       <View style={styles.notice}>
         <Ionicons name="information-circle-outline" size={20} color={colors.primary} />
         <Text style={styles.noticeText}>By submitting, you confirm that your availability and professional credentials are accurate.</Text>
       </View>
 
+      {error ? <Text style={styles.error}>{error}</Text> : null}
+
       <Pressable style={styles.backButton} onPress={() => goBack("/application-review")}>
         <Text style={styles.backText}>Back to review</Text>
       </Pressable>
-      <PrimaryButton title="Submit application" onPress={() => router.replace("/application-submitted")} style={{ marginTop: spacing.sm }} />
+      <PrimaryButton title="Submit application" onPress={submit} loading={busy} style={{ marginTop: spacing.sm }} />
     </ScrollView>
   );
 }
@@ -65,22 +75,6 @@ function Row({ icon, text }: { icon: keyof typeof Ionicons.glyphMap; text: strin
     <View style={styles.row}>
       <Ionicons name={icon} size={18} color={colors.textSecondary} />
       <Text style={styles.rowText}>{text}</Text>
-    </View>
-  );
-}
-
-function Detail({ label, value, verified = false }: { label: string; value: string; verified?: boolean }) {
-  return (
-    <View style={{ marginBottom: spacing.md }}>
-      <Text style={styles.label}>{label}</Text>
-      {verified ? (
-        <View style={styles.verifiedRow}>
-          <Ionicons name="checkmark-circle" size={16} color={colors.success} />
-          <Text style={styles.verifiedText}>{value}</Text>
-        </View>
-      ) : (
-        <Text style={styles.value}>{value}</Text>
-      )}
     </View>
   );
 }
@@ -95,17 +89,11 @@ const styles = StyleSheet.create({
   cardHeading: { ...typography.label, fontWeight: "700", color: colors.text, marginBottom: spacing.sm },
   jobTitle: { ...typography.h3, color: colors.text },
   facility: { ...typography.bodySmall, color: colors.textSecondary, marginTop: spacing.xs },
-  matchPill: { alignSelf: "flex-start", backgroundColor: colors.successLight, borderRadius: radius.round, paddingHorizontal: spacing.sm, paddingVertical: 4, marginTop: spacing.sm },
-  matchText: { color: colors.success, ...typography.bodySmall, fontWeight: "800" },
   row: { flexDirection: "row", alignItems: "center", marginTop: spacing.md, gap: spacing.sm },
-  rowText: { ...typography.bodySmall, color: colors.text },
-  label: { ...typography.bodySmall, color: colors.textSecondary, marginBottom: spacing.xs },
-  value: { ...typography.label, color: colors.text, fontWeight: "600" },
-  verifiedRow: { flexDirection: "row", alignItems: "center", gap: spacing.xs },
-  verifiedText: { color: colors.success, ...typography.label, fontWeight: "600" },
-  message: { ...typography.bodySmall, color: colors.text, lineHeight: 20 },
+  rowText: { ...typography.bodySmall, color: colors.text, flex: 1 },
   notice: { flexDirection: "row", backgroundColor: colors.primaryLight, borderRadius: radius.md, padding: spacing.md, gap: spacing.sm, marginBottom: spacing.lg },
   noticeText: { flex: 1, ...typography.bodySmall, color: colors.primary },
+  error: { ...typography.bodySmall, color: colors.error, marginBottom: spacing.md },
   backButton: { height: 48, borderWidth: 1, borderColor: colors.primary, borderRadius: radius.md, alignItems: "center", justifyContent: "center" },
   backText: { color: colors.primary, ...typography.label, fontWeight: "600" },
 });

@@ -2,90 +2,147 @@ import { View, Text, StyleSheet, Pressable, ScrollView } from "react-native";
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import PrimaryButton from "@/components/ui/PrimaryButton";
+import VerificationCard from "@/components/ui/VerificationCard";
+import { useVerification } from "@/hooks/useVerification";
+import { useWorkerData } from "@/hooks/useWorkerData";
+import { useProfile } from "@/hooks/useProfile";
+import { earningsThisMonth, getCounts, getNextShift, getRecommended, getUpcoming } from "@/services/worker-data.service";
 import { colors, radius, spacing, typography } from "@/constants/theme";
-
-// Mock — replace once backend exists
-const MOCK = {
-  name: "Amara",
-  upcomingCount: 1,
-  applicationsInReview: 2,
-  earningsThisMonth: 72000,
-  nextShiftPay: 28000,
-  nextShift: { title: "Community Nurse · Yaba Community Clinic", date: "Friday, 9 October 2026", time: "08:00–16:00 WAT", location: "Yaba, Lagos", checkIn: "07:45", pay: 28000 },
-  applicationBreakdown: { underReview: 2, accepted: 1, notSelected: 1 },
-  recommended: { title: "Registered Nurse · Acute Care", facility: "Mainland Care Hospital · Verified facility", match: "94% MATCH", date: "Tue, 6 Oct · 07:00–19:00 WAT · Ikeja, Lagos", rate: "₦3,000/hr · ₦36,000 estimated" },
-};
 
 const naira = (n: number) => `₦${n.toLocaleString()}`;
 
 export default function HomeScreen() {
-  const m = MOCK;
-  return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <View style={styles.headerRow}>
-        <View style={styles.headerText}>
-          <Text style={styles.eyebrow}>YOUR WORKSPACE</Text>
-          <Text style={styles.title}>Good morning, {m.name}.</Text>
-        </View>
-        <Pressable style={styles.bellButton} onPress={() => router.push("/notifications")}>
+  const { verified } = useVerification();
+  const { firstName } = useProfile();
+  const { loading, loaded, error } = useWorkerData();
+  const counts = getCounts();
+  const next = getNextShift();
+  const rec = getRecommended();
+  const upcomingCount = getUpcoming().length;
+
+  const header = (
+    <View style={styles.headerRow}>
+      <View style={styles.headerText}>
+        <Text style={styles.eyebrow}>YOUR WORKSPACE</Text>
+        <Text style={styles.title}>Good morning{firstName ? `, ${firstName}` : ""}.</Text>
+      </View>
+      <View style={styles.headerActions}>
+        <Pressable style={styles.bellButton} onPress={() => router.push("/notifications")} accessibilityLabel="Notifications">
           <Ionicons name="notifications-outline" size={24} color={colors.text} />
         </Pressable>
+        <Pressable style={styles.bellButton} onPress={() => router.push("/(tabs)/profile")} accessibilityLabel="Profile">
+          <Ionicons name="person-circle-outline" size={26} color={colors.text} />
+        </Pressable>
       </View>
+    </View>
+  );
+
+  // Not verified yet: only the verification status, profile and notifications are open.
+  if (!verified) {
+    return (
+      <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+        {header}
+        <VerificationCard />
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>A safer start for everyone</Text>
+          <Text style={styles.cardText}>Verification helps facilities confirm that you're qualified and ready to join their team.</Text>
+        </View>
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>Make your profile yours</Text>
+          <Text style={styles.cardText}>Check your specialty, experience and preferred locations so you're ready when verification is complete.</Text>
+          <Pressable style={styles.outlineButton} onPress={() => router.push("/experience")}>
+            <Text style={styles.outlineButtonText}>Update my profile</Text>
+          </Pressable>
+        </View>
+      </ScrollView>
+    );
+  }
+
+  return (
+    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+      {header}
       <Text style={styles.subtitle}>Your shifts, applications, and earnings in one place.</Text>
 
       <PrimaryButton title="Find shifts" onPress={() => router.push("/(tabs)/shifts")} style={{ marginTop: spacing.lg }} />
 
-      <View style={styles.statRow}>
-        <View style={styles.statCard}>
-          <Text style={styles.statNumber}>{m.upcomingCount}</Text>
-          <Text style={styles.statLabel}>Upcoming shift</Text>
-        </View>
+      {error ? <Text style={[styles.cardText, { color: colors.error, marginTop: spacing.md }]}>{error}</Text> : null}
+      {loading && !loaded ? <Text style={[styles.cardText, { marginTop: spacing.md }]}>Loading your shifts…</Text> : null}
+
+      <View style={styles.statCard}>
+        <Text style={styles.statNumber}>{upcomingCount}</Text>
+        <Text style={styles.statLabel}>{upcomingCount === 1 ? "Upcoming shift" : "Upcoming shifts"}</Text>
       </View>
       <View style={styles.statCard}>
-        <Text style={styles.statNumber}>{m.applicationsInReview}</Text>
+        <Text style={styles.statNumber}>{counts.underReview}</Text>
         <Text style={styles.statLabel}>Applications in review</Text>
       </View>
       <View style={styles.statCard}>
-        <Text style={styles.statNumber}>{naira(m.earningsThisMonth)}</Text>
+        <Text style={styles.statNumber}>{naira(earningsThisMonth())}</Text>
         <Text style={styles.statLabel}>Earnings this month</Text>
       </View>
       <View style={styles.statCard}>
-        <Text style={styles.statNumber}>{naira(m.nextShiftPay)}</Text>
+        <Text style={styles.statNumber}>{naira(next?.shift?.total ?? 0)}</Text>
         <Text style={styles.statLabel}>Expected next shift pay</Text>
       </View>
 
       <View style={styles.card}>
-        <View style={styles.badgeRow}>
-          <Ionicons name="checkmark-circle" size={14} color={colors.success} />
-          <Text style={styles.badgeText}>CONFIRMED · NEXT SHIFT</Text>
-        </View>
-        <Text style={styles.cardTitle}>{m.nextShift.title}</Text>
-        <Text style={styles.cardText}>{m.nextShift.date}</Text>
-        <Text style={styles.cardText}>{m.nextShift.location} · Arrive at {m.nextShift.checkIn} · {naira(m.nextShift.pay)} estimated</Text>
-        <PrimaryButton title="View upcoming shift" onPress={() => router.push("/(tabs)/upcoming")} style={{ marginTop: spacing.md }} />
+        {next?.shift ? (
+          <>
+            <View style={styles.badgeRow}>
+              <Ionicons name="checkmark-circle" size={14} color={colors.success} />
+              <Text style={styles.badgeText}>CONFIRMED · NEXT SHIFT</Text>
+            </View>
+            <Text style={styles.cardTitle}>{next.shift.title}</Text>
+            <Text style={styles.cardText}>{next.facility}</Text>
+            <Text style={styles.cardText}>
+              {next.shift.date} · {next.shift.time}
+            </Text>
+            <Text style={styles.cardText}>
+              {next.shift.location} · {naira(next.shift.total)}
+            </Text>
+            <PrimaryButton title="View upcoming shift" onPress={() => router.push("/(tabs)/upcoming")} style={{ marginTop: spacing.md }} />
+          </>
+        ) : (
+          <>
+            <Text style={styles.cardTitle}>No confirmed shift yet</Text>
+            <Text style={styles.cardText}>When a facility accepts your application, your next shift appears here.</Text>
+          </>
+        )}
       </View>
 
       <View style={styles.card}>
         <Text style={styles.cardTitle}>Application overview</Text>
-        <View style={styles.breakdownRow}><Text style={styles.breakdownLabel}>Under review</Text><Text style={styles.breakdownValue}>{m.applicationBreakdown.underReview} applications</Text></View>
-        <View style={styles.breakdownRow}><Text style={styles.breakdownLabel}>Accepted</Text><Text style={styles.breakdownValue}>{m.applicationBreakdown.accepted} application</Text></View>
-        <View style={styles.breakdownRow}><Text style={styles.breakdownLabel}>Not selected</Text><Text style={styles.breakdownValue}>{m.applicationBreakdown.notSelected} application</Text></View>
+        <View style={styles.breakdownRow}>
+          <Text style={styles.breakdownLabel}>Under review</Text>
+          <Text style={styles.breakdownValue}>{counts.underReview}</Text>
+        </View>
+        <View style={styles.breakdownRow}>
+          <Text style={styles.breakdownLabel}>Accepted</Text>
+          <Text style={styles.breakdownValue}>{counts.accepted}</Text>
+        </View>
+        <View style={styles.breakdownRow}>
+          <Text style={styles.breakdownLabel}>Not selected</Text>
+          <Text style={styles.breakdownValue}>{counts.notSelected}</Text>
+        </View>
         <Pressable style={styles.outlineButton} onPress={() => router.push("/(tabs)/applications")}>
           <Text style={styles.outlineButtonText}>View applications</Text>
         </Pressable>
       </View>
 
-      <View style={styles.card}>
-        <Text style={styles.cardTitle}>Recommended for you</Text>
-        <View style={{ marginTop: spacing.sm }}>
-          <Text style={styles.shiftTitle}>{m.recommended.title}</Text>
-          <Text style={styles.cardText}>{m.recommended.facility}</Text>
-          <View style={styles.matchPill}><Text style={styles.matchPillText}>{m.recommended.match}</Text></View>
-          <Text style={styles.cardText}>{m.recommended.date}</Text>
-          <Text style={styles.cardText}>{m.recommended.rate}</Text>
-          <PrimaryButton title="View shift" onPress={() => router.push("/shift-details")} style={{ marginTop: spacing.md }} />
+      {rec ? (
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>Open for you</Text>
+          <View style={{ marginTop: spacing.sm }}>
+            <Text style={styles.shiftTitle}>{rec.title}</Text>
+            <Text style={styles.cardText}>{rec.facility}</Text>
+            <Text style={styles.cardText}>
+              {rec.date} · {rec.time} · {rec.location}
+            </Text>
+            <Text style={styles.cardText}>{naira(rec.total)} for the shift</Text>
+            <PrimaryButton title="View shift" onPress={() => router.push({ pathname: "/shift-details", params: { id: rec.id } })} style={{ marginTop: spacing.md }} />
+          </View>
         </View>
-      </View>
+      ) : null}
     </ScrollView>
   );
 }
@@ -95,11 +152,11 @@ const styles = StyleSheet.create({
   content: { paddingHorizontal: spacing.lg, paddingTop: spacing.xl, paddingBottom: spacing.xxl },
   headerRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" },
   headerText: { flex: 1, marginRight: spacing.md },
+  headerActions: { flexDirection: "row", gap: spacing.sm },
   bellButton: { width: 44, height: 44, borderRadius: radius.round, backgroundColor: colors.card, alignItems: "center", justifyContent: "center" },
   eyebrow: { ...typography.bodySmall, color: colors.primary, fontWeight: "700" },
   title: { ...typography.h2, color: colors.text, marginTop: spacing.xs },
   subtitle: { ...typography.bodySmall, color: colors.textSecondary, marginTop: spacing.xs },
-  statRow: { flexDirection: "row" },
   statCard: { backgroundColor: colors.card, borderRadius: radius.lg, padding: spacing.lg, marginTop: spacing.md },
   statNumber: { ...typography.h2, color: colors.text },
   statLabel: { ...typography.bodySmall, color: colors.textSecondary, marginTop: spacing.xs },
@@ -114,6 +171,4 @@ const styles = StyleSheet.create({
   outlineButton: { borderWidth: 1, borderColor: colors.primary, borderRadius: radius.md, paddingVertical: spacing.sm, alignItems: "center", marginTop: spacing.md },
   outlineButtonText: { color: colors.primary, ...typography.label, fontWeight: "600" },
   shiftTitle: { ...typography.label, fontWeight: "700", color: colors.text },
-  matchPill: { backgroundColor: "#DCFCE7", alignSelf: "flex-start", borderRadius: radius.sm, paddingHorizontal: spacing.sm, paddingVertical: 2, marginVertical: spacing.xs },
-  matchPillText: { ...typography.bodySmall, color: colors.success, fontWeight: "700" },
 });

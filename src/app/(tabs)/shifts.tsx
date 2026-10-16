@@ -1,7 +1,6 @@
-import { useEffect, useState } from "react";
-import { View, Text, StyleSheet, Pressable, ScrollView } from "react-native";
-import { router } from "expo-router";
-import { Ionicons } from "@expo/vector-icons";
+import { useCallback, useState } from "react";
+import { View, Text, StyleSheet, ScrollView, RefreshControl, ActivityIndicator } from "react-native";
+import { router, useFocusEffect } from "expo-router";
 import AppInput from "@/components/ui/AppInput";
 import AppSelect from "@/components/ui/AppSelect";
 import PrimaryButton from "@/components/ui/PrimaryButton";
@@ -9,106 +8,109 @@ import { getShifts } from "@/services/shift.service";
 import { Shift } from "@/types/shift";
 import { colors, radius, spacing, typography } from "@/constants/theme";
 
-const LOCATIONS = ["Lagos · 25 km", "Lagos · 10 km", "Lagos · 50 km"];
-const DATES = ["Any date", "Today", "This week", "This month"];
-const SPECIALTIES = ["Nursing", "Doctor", "Pharmacy", "Lab"];
+const SORTS = ["Soonest", "Newest", "Highest pay"];
 
 const naira = (n: number) => `₦${n.toLocaleString()}`;
 
-function tagStyle(tag?: string | null) {
-  if (tag === "URGENT") return { bg: "#FEF3C7", color: "#B45309" };
-  if (tag === "NEW") return { bg: "#DCFCE7", color: colors.success };
-  return { bg: "#DCFCE7", color: colors.success };
-}
-
 export default function ShiftsScreen() {
   const [shifts, setShifts] = useState<Shift[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [loaded, setLoaded] = useState(false);
+  const [error, setError] = useState("");
   const [search, setSearch] = useState("");
-  const [location, setLocation] = useState<string | null>(LOCATIONS[0]);
-  const [date, setDate] = useState<string | null>(DATES[0]);
-  const [specialty, setSpecialty] = useState<string | null>(SPECIALTIES[0]);
+  const [sort, setSort] = useState<string | null>(SORTS[0]);
 
-  useEffect(() => {
-    getShifts().then(setShifts);
+  const load = useCallback(async () => {
+    setLoading(true);
+    setError("");
+    try {
+      setShifts(await getShifts());
+      setLoaded(true);
+    } catch (e: any) {
+      setError(e.message ?? "Couldn't load shifts. Try again.");
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
+  useFocusEffect(
+    useCallback(() => {
+      load();
+    }, [load])
+  );
+
+  const q = search.trim().toLowerCase();
+  const list = shifts
+    .filter((s) => !q || `${s.title} ${s.facility} ${s.location}`.toLowerCase().includes(q))
+    .sort((a, b) => {
+      if (sort === "Highest pay") return b.total - a.total;
+      if (sort === "Newest") return b.createdAt.localeCompare(a.createdAt);
+      return a.sortKey.localeCompare(b.sortKey);
+    });
+
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+    <ScrollView
+      style={styles.container}
+      contentContainerStyle={styles.content}
+      refreshControl={<RefreshControl refreshing={loading && loaded} onRefresh={load} />}
+    >
       <Text style={styles.eyebrow}>SHIFT MARKETPLACE</Text>
       <Text style={styles.title}>Find your next healthcare shift.</Text>
-      <Text style={styles.subtitle}>Explore verified facilities across Lagos. Choose shifts that fit your specialty and availability.</Text>
+      <Text style={styles.subtitle}>Open shifts from facilities across Lagos. Pick the ones that fit your specialty and availability.</Text>
 
       <View style={styles.card}>
         <Text style={styles.label}>Search shifts</Text>
-        <AppInput placeholder="Role, specialty or facility" value={search} onChangeText={setSearch} />
+        <AppInput placeholder="Role, specialty, facility or area" value={search} onChangeText={setSearch} />
 
-        <Text style={[styles.label, { marginTop: spacing.lg }]}>Location</Text>
-        <AppSelect placeholder="Lagos · 25 km" value={location} options={LOCATIONS} onChange={setLocation} />
-
-        <Text style={[styles.label, { marginTop: spacing.lg }]}>Date</Text>
-        <AppSelect placeholder="Any date" value={date} options={DATES} onChange={setDate} />
-
-        <Text style={[styles.label, { marginTop: spacing.lg }]}>Specialty</Text>
-        <AppSelect placeholder="Nursing" value={specialty} options={SPECIALTIES} onChange={setSpecialty} />
+        <Text style={[styles.label, { marginTop: spacing.lg }]}>Sort shifts</Text>
+        <AppSelect placeholder="Soonest" value={sort} options={SORTS} onChange={setSort} />
       </View>
 
       <View style={styles.card}>
-        <Text style={styles.cardTitle}>Recommended shifts</Text>
+        <Text style={styles.cardTitle}>Open shifts</Text>
         <View style={styles.resultsPill}>
-          <Text style={styles.resultsPillText}>{shifts.length} RESULTS</Text>
+          <Text style={styles.resultsPillText}>{list.length} RESULTS</Text>
         </View>
 
-        {shifts.map((shift) => {
-          const t = tagStyle(shift.tag);
-          return (
-            <View key={shift.id} style={styles.shiftCard}>
-              <Text style={styles.shiftTitle}>{shift.title}</Text>
-              <Text style={styles.shiftFacility}>{shift.facility} · Verified facility</Text>
+        {loading && !loaded ? <ActivityIndicator color={colors.primary} style={{ marginVertical: spacing.lg }} /> : null}
 
-              {shift.tag ? (
-                <View style={[styles.tagPill, { backgroundColor: t.bg }]}>
-                  <Text style={[styles.tagPillText, { color: t.color }]}>{shift.tag}</Text>
-                </View>
-              ) : (
-                <View style={[styles.tagPill, { backgroundColor: "#DCFCE7" }]}>
-                  <Text style={[styles.tagPillText, { color: colors.success }]}>{shift.matchPercent}% MATCH</Text>
-                </View>
-              )}
+        {error ? (
+          <View>
+            <Text style={styles.error}>{error}</Text>
+            <PrimaryButton title="Try again" onPress={load} style={{ marginTop: spacing.md }} />
+          </View>
+        ) : null}
 
-              <Text style={styles.shiftMeta}>{shift.date} · {shift.time} · {shift.location} · {shift.distanceKm} km</Text>
-              <Text style={styles.shiftRate}>{naira(shift.rate)}/hr · {naira(shift.total)} total</Text>
+        {loaded && !error && list.length === 0 ? <Text style={styles.cardText}>No open shifts right now. Pull down to refresh.</Text> : null}
 
-              <PrimaryButton
-                title="View shift"
-                onPress={() => router.push({ pathname: "/shift-details", params: { id: shift.id } })}
-                style={{ marginTop: spacing.md }}
-              />
-            </View>
-          );
-        })}
+        {list.map((shift) => (
+          <View key={shift.id} style={styles.shiftCard}>
+            <Text style={styles.shiftTitle}>{shift.title}</Text>
+            <Text style={styles.shiftFacility}>{shift.facility}</Text>
 
-        <Text style={styles.footnote}>Showing {shifts.length} of 24 sample shifts · All times are WAT</Text>
-      </View>
+            {shift.tag ? (
+              <View style={styles.tagPill}>
+                <Text style={styles.tagPillText}>{shift.tag}</Text>
+              </View>
+            ) : null}
 
-      <View style={styles.card}>
-        <Text style={styles.label}>Sort shifts</Text>
-        <AppSelect placeholder="Best match" value="Best match" options={["Best match", "Newest", "Highest pay", "Closest"]} onChange={() => {}} />
+            <Text style={styles.shiftMeta}>
+              {shift.date} · {shift.time}
+              {shift.location ? ` · ${shift.location}` : ""}
+            </Text>
+            <Text style={styles.shiftRate}>
+              {naira(shift.total)} per person{shift.hours > 0 ? ` · ${shift.hours}h` : ""}
+            </Text>
 
-        <View style={styles.verifiedRow}>
-          <Ionicons name="checkmark-circle" size={14} color={colors.success} />
-          <Text style={styles.verifiedText}>PROFILE VERIFIED</Text>
-        </View>
-        <Text style={styles.cardTitle}>Ready for your next shift</Text>
-        <Text style={styles.cardText}>Your credentials are approved. Set your availability to improve your matches.</Text>
+            <PrimaryButton
+              title="View shift"
+              onPress={() => router.push({ pathname: "/shift-details", params: { id: shift.id } })}
+              style={{ marginTop: spacing.md }}
+            />
+          </View>
+        ))}
 
-        <Text style={[styles.breakdownLabel, { marginTop: spacing.md }]}>Specialty</Text>
-        <Text style={styles.breakdownValue}>Registered nurse</Text>
-        <Text style={[styles.breakdownLabel, { marginTop: spacing.sm }]}>Search radius</Text>
-        <Text style={styles.breakdownValue}>25 km</Text>
-
-        <Pressable style={styles.outlineButton}>
-          <Text style={styles.outlineButtonText}>Update availability</Text>
-        </Pressable>
+        <Text style={styles.footnote}>All times are WAT</Text>
       </View>
     </ScrollView>
   );
@@ -124,20 +126,15 @@ const styles = StyleSheet.create({
   label: { ...typography.label, color: colors.text, marginBottom: spacing.sm },
   cardTitle: { ...typography.h3, color: colors.text },
   cardText: { ...typography.bodySmall, color: colors.textSecondary, marginTop: spacing.xs },
+  error: { ...typography.bodySmall, color: colors.error, marginTop: spacing.md },
   resultsPill: { backgroundColor: colors.primaryLight, alignSelf: "flex-start", borderRadius: radius.sm, paddingHorizontal: spacing.sm, paddingVertical: 2, marginTop: spacing.sm, marginBottom: spacing.md },
   resultsPillText: { ...typography.bodySmall, color: colors.primary, fontWeight: "700" },
   shiftCard: { borderWidth: 1, borderColor: colors.borderLight, borderRadius: radius.lg, padding: spacing.md, marginBottom: spacing.md },
   shiftTitle: { ...typography.label, fontWeight: "700", color: colors.text },
   shiftFacility: { ...typography.bodySmall, color: colors.textSecondary, marginTop: 2 },
-  tagPill: { alignSelf: "flex-start", borderRadius: radius.sm, paddingHorizontal: spacing.sm, paddingVertical: 2, marginTop: spacing.sm },
-  tagPillText: { ...typography.bodySmall, fontWeight: "700" },
+  tagPill: { alignSelf: "flex-start", backgroundColor: colors.warningLight, borderRadius: radius.sm, paddingHorizontal: spacing.sm, paddingVertical: 2, marginTop: spacing.sm },
+  tagPillText: { ...typography.bodySmall, color: colors.warning, fontWeight: "700" },
   shiftMeta: { ...typography.bodySmall, color: colors.text, marginTop: spacing.sm },
   shiftRate: { ...typography.label, fontWeight: "700", color: colors.text, marginTop: spacing.xs },
   footnote: { ...typography.bodySmall, color: colors.textSecondary, textAlign: "center", marginTop: spacing.sm },
-  verifiedRow: { flexDirection: "row", alignItems: "center", gap: 4, marginTop: spacing.lg },
-  verifiedText: { ...typography.bodySmall, color: colors.success, fontWeight: "700" },
-  breakdownLabel: { ...typography.bodySmall, color: colors.textSecondary },
-  breakdownValue: { ...typography.label, fontWeight: "600", color: colors.text },
-  outlineButton: { borderWidth: 1, borderColor: colors.primary, borderRadius: radius.md, paddingVertical: spacing.sm, alignItems: "center", marginTop: spacing.lg },
-  outlineButtonText: { color: colors.primary, ...typography.label, fontWeight: "600" },
 });

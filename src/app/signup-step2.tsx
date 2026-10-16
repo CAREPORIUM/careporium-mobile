@@ -14,6 +14,14 @@ import { goBack } from "@/utils/navigation";
 const PROFESSIONS = ["Doctor", "Nurse", "Pharmacist", "Lab Technician", "Other"];
 const SPECIALTIES = ["Gynecologist", "Pediatrician", "Surgeon", "General Practice", "Other"];
 
+// "Ikeja, Lagos" -> address "Ikeja, Lagos", state "Lagos"
+function splitLocation(raw: string) {
+  const parts = raw.split(",").map((p) => p.trim()).filter(Boolean);
+  const address = raw.trim();
+  const state = parts.length > 1 ? parts[parts.length - 1] : undefined;
+  return { address, state, country: "Nigeria" };
+}
+
 export default function SignupStep2Screen() {
   const [profession, setProfession] = useState<string | null>(null);
   const [specialty, setSpecialty] = useState<string | null>(null);
@@ -48,7 +56,7 @@ export default function SignupStep2Screen() {
         profession: profession as string,
         specialty: specialty as string,
         yearsOfExperience: years,
-        location: { address: draft.location, country: "Nigeria" },
+        location: splitLocation(draft.location),
       });
       clearSignupDraft();
       router.dismissAll();

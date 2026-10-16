@@ -1,17 +1,23 @@
 export type Shift = {
   id: string;
-  title: string;
+  title: string; // "Registered nurse · Emergency care"
   facility: string;
-  verifiedFacility: boolean;
-  tag?: "URGENT" | "NEW" | null;
-  matchPercent?: number;
-  date: string;
-  time: string;
   location: string;
-  distanceKm: number;
-  rate: number;
-  total: number;
+  date: string; // "Sat, 25 Oct"
+  time: string; // "08:00–20:00 WAT"
+  shiftType: string;
+  total: number; // naira per person for the whole shift
+  hours: number;
+  rate: number; // total / hours
+  tag: "URGENT" | null;
   description: string;
   duties: string[];
-  closesAt: string;
-};
+  requirements: string;
+  arrival: string;
+  experience: string;
+  status: string;
+  needed: number;
+  filled: number;
+  sortKey: string; // "2026-10-25 08:00"
+  createdAt: string;
+};  

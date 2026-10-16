@@ -2,9 +2,9 @@ import { ReactNode } from "react";
 import { View, Text, StyleSheet, Pressable, ScrollView, Alert, StyleProp, ViewStyle } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import type { Href } from "expo-router";
+import { useLogout } from "@/hooks/useLogout";
 import { colors, radius, spacing, typography } from "@/constants/theme";
 import { goBack } from "@/utils/navigation";
-import { router } from "expo-router";
 
 // Shared building blocks for every admin screen.
 
@@ -18,11 +18,24 @@ export function Brand() {
 }
 
 export function AdminHeader() {
+  const { handleLogout, loggingOut } = useLogout();
+  const confirmLogout = () =>
+    Alert.alert("Log out", "Sign out of the admin account?", [
+      { text: "Cancel", style: "cancel" },
+      { text: "Log out", style: "destructive", onPress: handleLogout },
+    ]);
+
   return (
     <View style={styles.header}>
       <Brand />
-<Pressable onPress={() => router.push("/admin/notifications")} hitSlop={8} accessibilityLabel="Notifications">        <Ionicons name="notifications-outline" size={26} color={colors.text} />
-      </Pressable>
+      <View style={styles.headerActions}>
+        <Pressable onPress={() => Alert.alert("Notifications", "No new notifications")} hitSlop={8} accessibilityLabel="Notifications">
+          <Ionicons name="notifications-outline" size={26} color={colors.text} />
+        </Pressable>
+        <Pressable onPress={confirmLogout} disabled={loggingOut} hitSlop={8} accessibilityLabel="Log out">
+          <Ionicons name="log-out-outline" size={26} color={loggingOut ? colors.textSecondary : colors.text} />
+        </Pressable>
+      </View>
     </View>
   );
 }
@@ -119,6 +132,7 @@ export function CheckRow({ label, checked, onToggle }: { label: string; checked:
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.card },
   content: { padding: spacing.lg, paddingBottom: spacing.xxl },
+  headerActions: { flexDirection: "row", alignItems: "center", gap: spacing.lg },
   brandRow: { flexDirection: "row", alignItems: "center", gap: spacing.sm },
   brand: { ...typography.h3, color: colors.primary, fontWeight: "600" },
   header: {

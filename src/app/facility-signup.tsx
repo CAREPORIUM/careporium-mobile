@@ -9,6 +9,7 @@ import UploadRow from "@/components/ui/UploadRow";
 import type { PickedFile } from "@/components/ui/UploadBox";
 import { colors, radius, spacing, typography } from "@/constants/theme";
 import { goBack } from "@/utils/navigation";
+import { registerFacility } from "@/services/signup.service";
 
 const FACILITY_TYPES = ["Hospital", "Clinic", "Medical Lab", "Pharmacy", "Home Care", "Other"];
 
@@ -55,10 +56,41 @@ export default function FacilitySignupScreen() {
 
   // Step 4
   const [agreedFinal, setAgreedFinal] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState("");
 
   const step1Valid = legalName && facilityType && businessEmail && phone && location && password && confirmPassword && password === confirmPassword && agreedStep1;
   const step2Valid = regCert && license && tin;
   const step3Valid = fullName && position && personnelEmail && personnelPhone;
+
+  const submit = async () => {
+    if (submitting || !regCert || !license || !tin || !facilityType) return;
+    setSubmitting(true);
+    setSubmitError("");
+    try {
+      await registerFacility({
+        facilityName: legalName,
+        facilityType,
+        email: businessEmail,
+        phoneNumber: phone,
+        password,
+        location,
+        contactName: fullName,
+        contactPosition: position,
+        contactEmail: personnelEmail,
+        contactPhone: personnelPhone,
+        businessRegCert: regCert as any,
+        facilityLicense: license as any,
+        taxID: tin as any,
+      });
+      // The account exists now. A code was emailed; confirm it, then the account waits for admin approval.
+      router.replace({ pathname: "/verify-otp", params: { email: businessEmail.trim().toLowerCase() } });
+    } catch (e: any) {
+      setSubmitError(e?.message ?? "Couldn't submit your registration. Try again.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   const handleBack = () => (step > 1 ? setStep(step - 1) : goBack("/role-selection"));
 
@@ -216,7 +248,8 @@ export default function FacilitySignupScreen() {
         <Text style={styles.noticeText}>By submitting this registration, you confirm that the information and documents provided are accurate and belong to your healthcare facility.</Text>
       </View>
 
-      <PrimaryButton title="Submit" disabled={!agreedFinal} onPress={() => router.replace("/facility-registration-submitted")} style={{ marginTop: spacing.lg }} />
+      {submitError ? <Text style={styles.submitError}>{submitError}</Text> : null}
+      <PrimaryButton title="Submit" disabled={!agreedFinal} loading={submitting} onPress={submit} style={{ marginTop: spacing.lg }} />
       <Pressable style={styles.backTextButton} onPress={handleBack}>
         <Text style={styles.backTextLabel}>Back</Text>
       </Pressable>
@@ -250,5 +283,6 @@ const styles = StyleSheet.create({
   reviewSectionTitle: { ...typography.label, fontWeight: "700", color: colors.text },
   editLink: { color: colors.primary, ...typography.bodySmall, fontWeight: "600" },
   reviewRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", backgroundColor: colors.primaryLight, borderRadius: radius.md, paddingVertical: spacing.sm, paddingHorizontal: spacing.md, marginBottom: spacing.sm },
+  submitError: { ...typography.bodySmall, color: colors.error, marginTop: spacing.md },
   reviewText: { ...typography.bodySmall, color: colors.text },
 });
